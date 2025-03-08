@@ -38,11 +38,11 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
   };
 
   const isOwned = (id: string) => 
-    playerEquipment.inventory.some(e => e.id === id) || 
-    playerEquipment.equipped.some(e => e.id === id);
+    playerEquipment?.inventory?.some(e => e.id === id) || 
+    playerEquipment?.equipped?.some(e => e.id === id);
 
   const isEquipped = (id: string) => 
-    playerEquipment.equipped.some(e => e.id === id);
+    playerEquipment?.equipped?.some(e => e.id === id);
 
   const getRarityColor = (rarity: Equipment['rarity']) => {
     switch (rarity) {
@@ -120,10 +120,10 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
       <div className="space-y-4">
         <div>
           <h3 className="text-green-400 font-bold font-mono mb-4">
-            Equipped ({playerEquipment.equipped.length}/5)
+            Equipped ({playerEquipment?.equipped?.length || 0}/5)
           </h3>
           <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
-            {playerEquipment.equipped.map((item) => (
+            {playerEquipment?.equipped?.map((item) => (
               <div key={item.id} className="bg-black/50 border-2 border-green-400 rounded-lg p-2 flex justify-between items-center">
                 <span className="font-mono text-sm">{item.name}</span>
                 <button
@@ -139,17 +139,17 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
         
         <div>
           <h3 className="text-green-400 font-bold font-mono mb-4">
-            Inventory ({playerEquipment.inventory.length}/5)
+            Inventory ({playerEquipment?.inventory?.length || 0}/5)
           </h3>
           <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
-            {playerEquipment.inventory.map((item) => (
+            {playerEquipment?.inventory?.map((item) => (
               <div key={item.id} className="bg-black/50 border-2 border-green-900/50 rounded-lg p-2 flex justify-between items-center">
                 <span className="font-mono text-sm">{item.name}</span>
                 <button
                   onClick={() => onEquip(item.id)}
-                  disabled={playerEquipment.equipped.length >= 5}
+                  disabled={playerEquipment?.equipped?.length >= 5}
                   className={`px-2 py-1 rounded border border-green-500 text-xs font-mono
-                    ${playerEquipment.equipped.length >= 5 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-900/30'}`}
+                    ${playerEquipment?.equipped?.length >= 5 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-900/30'}`}
                 >
                   Equip
                 </button>

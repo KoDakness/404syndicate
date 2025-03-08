@@ -29,8 +29,8 @@ const initialPlayer: Player = {
     underground: 0,
   },
   equipment: {
-    equipped: [],
-    inventory: []
+    equipped: [] as Equipment[],
+    inventory: [] as Equipment[]
   },
   inventory: [],
   activeEvents: [],
@@ -67,6 +67,7 @@ function App() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.clear(); // Clear any stored tokens
     playSound('click');
     setSession(null);
     setPlayer(initialPlayer);
@@ -167,12 +168,30 @@ function App() {
 
   // Check for existing session on load
   useEffect(() => {
-    handleLogin();
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          handleLogin();
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        // Silently handle initialization errors
+      }
+    };
+
+    initAuth();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      if (session) {
+        setSession(session);
+        handleLogin();
+      } else {
+        setSession(null);
+        setPlayer(initialPlayer);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -240,7 +259,10 @@ function App() {
       return;
     }
     
-    if (player.equipment.inventory.length + player.equipment.equipped.length >= 10) {
+    const inventoryCount = player.equipment?.inventory?.length || 0;
+    const equippedCount = player.equipment?.equipped?.length || 0;
+    
+    if (inventoryCount + equippedCount >= 10) {
       addMessage('ERROR: Maximum equipment capacity reached');
       return;
     }
@@ -249,8 +271,8 @@ function App() {
       ...player,
       credits: player.credits - equipment.cost,
       equipment: {
-        ...player.equipment,
-        inventory: [...player.equipment.inventory, equipment]
+        equipped: player.equipment?.equipped || [],
+        inventory: [...(player.equipment?.inventory || []), equipment]
       }
     };
 
@@ -267,24 +289,24 @@ function App() {
   };
 
   const equipItem = async (equipmentId: string) => {
-    if (player.equipment.equipped.length >= 5) {
+    if ((player.equipment?.equipped?.length || 0) >= 5) {
       addMessage('ERROR: Maximum equipped items reached (5)');
       return;
     }
 
-    const item = player.equipment.inventory.find(e => e.id === equipmentId);
+    const item = player.equipment?.inventory?.find(e => e.id === equipmentId);
     if (!item) return;
 
     // Calculate new maxConcurrentJobs based on equipment effects
-    const newMaxJobs = player.equipment.equipped.reduce((total, eq) => {
+    const newMaxJobs = (player.equipment?.equipped || []).reduce((total, eq) => {
       return total + (eq.effects.concurrent_jobs || 0);
     }, 2) + (item.effects.concurrent_jobs || 0);
 
     const updatedPlayer = {
       ...player,
       equipment: {
-        equipped: player.equipment.equipped ? [...player.equipment.equipped, item] : [item],
-        inventory: player.equipment.inventory.filter(e => e.id !== equipmentId)
+        equipped: [...(player.equipment?.equipped || []), item],
+        inventory: (player.equipment?.inventory || []).filter(e => e.id !== equipmentId)
       },
       maxConcurrentJobs: newMaxJobs
     };
@@ -301,11 +323,11 @@ function App() {
   };
 
   const unequipItem = async (equipmentId: string) => {
-    const item = player.equipment.equipped.find(e => e.id === equipmentId);
+    const item = player.equipment?.equipped?.find(e => e.id === equipmentId);
     if (!item) return;
 
     // Recalculate maxConcurrentJobs without this item
-    const newMaxJobs = player.equipment.equipped.reduce((total, eq) => {
+    const newMaxJobs = (player.equipment?.equipped || []).reduce((total, eq) => {
       if (eq.id === equipmentId) return total;
       return total + (eq.effects.concurrent_jobs || 0);
     }, 2);
@@ -313,8 +335,8 @@ function App() {
     const updatedPlayer = {
       ...player,
       equipment: {
-        equipped: player.equipment.equipped ? player.equipment.equipped.filter(e => e.id !== equipmentId) : [],
-        inventory: player.equipment.inventory ? [...player.equipment.inventory, item] : [item]
+        equipped: (player.equipment?.equipped || []).filter(e => e.id !== equipmentId),
+        inventory: [...(player.equipment?.inventory || []), item]
       },
       maxConcurrentJobs: newMaxJobs
     };

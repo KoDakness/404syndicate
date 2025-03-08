@@ -79,11 +79,11 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onLogout }) => {
           </div>
         </div>
       </div>
-      {player.equipment?.equipped?.length > 0 && (
+      {player.equipment && player.equipment.equipped && player.equipment.equipped.length > 0 && (
         <div className="mt-4">
           <div className="text-sm text-green-600 font-mono mb-2">Installed Equipment</div>
           <div className="flex flex-wrap gap-2">
-            {player.equipment?.equipped?.map((eq) => (
+            {player.equipment.equipped.map((eq) => (
               <div key={eq.id} className="bg-black/50 border-2 border-green-900/50 rounded px-2 py-1 text-xs font-mono">
                 {eq.name}
               </div>
