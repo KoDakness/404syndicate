@@ -559,7 +559,7 @@ function App() {
                 activeJobs: prev.activeJobs.filter(id => id !== job.id),
                 reputation: {
                   ...prev.reputation,
-                  [job.faction]: prev.reputation[job.faction === 'corporate' ? 'corporate' : 'underground'] + 1
+                  [job.faction]: (prev.reputation[job.faction] || 0) + 1
                 }
               };
               
@@ -591,9 +591,9 @@ function App() {
           });
 
           setPlayer(prev => {
-            let newExp = player.experience + totalExp;
-            let newLevel = player.level;
-            let newSkillPoints = player.skills.skillPoints;
+            let newExp = (prev.experience || 0) + totalExp;
+            let newLevel = prev.level || 1;
+            let newSkillPoints = (prev.skills?.skillPoints || 0);
 
             // Level up if enough exp (1000 exp per level)
             while (newExp >= 1000) {
@@ -609,7 +609,10 @@ function App() {
               level: newLevel,
               experience: newExp,
               skills: {
-                ...prev.skills,
+                decryption: prev.skills?.decryption || 1,
+                firewall: prev.skills?.firewall || 1,
+                spoofing: prev.skills?.spoofing || 1,
+                social: prev.skills?.social || 1,
                 skillPoints: newSkillPoints
               }
             };
