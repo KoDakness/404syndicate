@@ -7,7 +7,7 @@ const SOUND_URLS = {
 };
 
 // Cyberpunk-style background music
-const BACKGROUND_MUSIC_URL = 'https://assets.mixkit.co/active_storage/sfx/123/123-preview.mp3';
+const BACKGROUND_MUSIC_URL = '/sounds/background.mp3';
 
 let globalVolume = 0.5;
 let isMuted = false;
