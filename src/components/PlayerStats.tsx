@@ -1,0 +1,78 @@
+import React from 'react';
+import { Player } from '../types';
+import { Wallet, Shield, Ghost, Award, Bitcoin, Lock, Brain, Cpu } from 'lucide-react';
+
+interface PlayerStatsProps {
+  player: Player;
+}
+
+export const PlayerStats: React.FC<PlayerStatsProps> = ({ player }) => {
+  return (
+    <div className="bg-black/50 border-4 border-green-900/50 rounded-lg p-4 backdrop-blur-sm shadow-xl shadow-green-900/30">
+      <div className="flex items-center gap-4 mb-2">
+        <div className="flex items-center gap-2">
+          <Award className="text-yellow-400" />
+          <span className="text-green-400 font-mono">
+            Level {player.level}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Wallet className="text-green-400" />
+          <span className="text-green-400 font-mono">
+            Credits: ${player.credits.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Bitcoin className="text-yellow-400" />
+          <span className="text-yellow-400 font-mono">
+            Torcoins: {player.torcoins}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Shield className="text-green-400" />
+          <span className="text-green-400 font-mono">
+            Corp: {player.reputation.corporate}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Ghost className="text-green-400" />
+          <span className="text-green-400 font-mono">
+            Underground: {player.reputation.underground}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-2">
+          <Brain className="w-4 h-4 text-purple-400" />
+          <span className="text-green-400 font-mono">
+            Dec: {player.skills.decryption}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Shield className="w-4 h-4 text-red-400" />
+          <span className="text-green-400 font-mono">
+            Fwall: {player.skills.firewall}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Cpu className="w-4 h-4 text-blue-400" />
+          <span className="text-green-400 font-mono">
+            Spoof: {player.skills.spoofing}
+          </span>
+        </div>
+      </div>
+      {player.equipment.equipped.length > 0 && (
+        <div className="mt-4">
+          <div className="text-sm text-green-600 font-mono mb-2">Installed Equipment</div>
+          <div className="flex flex-wrap gap-2">
+            {player.equipment.equipped.map((eq) => (
+              <div key={eq.id} className="bg-black/50 border-2 border-green-900/50 rounded px-2 py-1 text-xs font-mono">
+                {eq.name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
