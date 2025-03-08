@@ -88,8 +88,9 @@ function App() {
   const handleLogin = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setSession(session);
-    
     if (session) {
+      addMessage('Establishing secure connection...');
+      
       setJobs(getRandomContracts(availableJobs, 8));
       
       // Fetch player data
@@ -102,17 +103,25 @@ function App() {
       if (error && error.code === 'PGRST116') {
         // Create new player profile if one doesn't exist
         const now = new Date();
-        const nextRefresh = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+        const nextRefreshTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
         
         const { data: newPlayer, error: createError } = await supabase
           .from('players')
           .insert([{
             id: session.user.id,
-            username: 'hacker',
+            username: session.user.email?.split('@')[0] || 'hacker',
+            credits: initialPlayer.credits,
+            torcoins: initialPlayer.torcoins,
+            level: initialPlayer.level,
+            experience: initialPlayer.experience,
+            max_concurrent_jobs: initialPlayer.maxConcurrentJobs,
+            reputation: initialPlayer.reputation,
+            skills: initialPlayer.skills,
+            equipment: initialPlayer.equipment,
+            inventory: initialPlayer.inventory,
             last_contract_refresh: now.toISOString(),
-            next_contract_refresh: nextRefresh.toISOString(),
+            next_contract_refresh: nextRefreshTime.toISOString(),
             manual_refresh_available: true,
-            ...initialPlayer
           }])
           .select()
           .single();
@@ -125,7 +134,11 @@ function App() {
         if (newPlayer) {
           setPlayer({
             ...initialPlayer,
-            ...newPlayer
+            ...newPlayer,
+            equipment: newPlayer.equipment || initialPlayer.equipment,
+            skills: newPlayer.skills || initialPlayer.skills,
+            reputation: newPlayer.reputation || initialPlayer.reputation,
+            inventory: newPlayer.inventory || initialPlayer.inventory
           });
           addMessage(`Welcome to the Syndicate, ${newPlayer.username}!`);
         }
@@ -135,9 +148,19 @@ function App() {
       } else if (playerData) {
         setPlayer({
           ...initialPlayer,
-          ...playerData
+          ...playerData,
+          equipment: playerData.equipment || initialPlayer.equipment,
+          skills: playerData.skills || initialPlayer.skills,
+          reputation: playerData.reputation || initialPlayer.reputation,
+          inventory: playerData.inventory || initialPlayer.inventory
         });
         addMessage(`Welcome back, ${playerData.username}!`);
+        
+        // Update next refresh time if needed
+        if (playerData.next_contract_refresh) {
+          const nextRefresh = new Date(playerData.next_contract_refresh);
+          setNextRefresh(nextRefresh);
+        }
       }
     }
   };
@@ -186,10 +209,19 @@ function App() {
   // Helper function to sync player data with database
   const syncPlayerData = async (updates: Partial<Player>) => {
     if (!session?.user?.id) return;
+    
+    // Ensure JSON fields are properly formatted
+    const sanitizedUpdates = {
+      ...updates,
+      equipment: updates.equipment ? JSON.stringify(updates.equipment) : undefined,
+      skills: updates.skills ? JSON.stringify(updates.skills) : undefined,
+      reputation: updates.reputation ? JSON.stringify(updates.reputation) : undefined,
+      inventory: updates.inventory ? JSON.stringify(updates.inventory) : undefined
+    };
 
     const { error } = await supabase
       .from('players')
-      .update(updates)
+      .update(sanitizedUpdates)
       .eq('id', session.user.id);
 
     if (error) {
