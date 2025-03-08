@@ -7,7 +7,7 @@ const SOUND_URLS = {
 };
 
 // Cyberpunk-style background music
-const BACKGROUND_MUSIC_URL = 'src/sounds/background.mp3';
+const BACKGROUND_MUSIC_URL = '/sounds/background.mp3';
 
 let globalVolume = 0.5;
 let isMuted = false;
