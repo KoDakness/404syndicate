@@ -549,7 +549,8 @@ function App() {
             playSound('complete');
             // Add experience based on job difficulty
             const expGained = expRewards[job.difficulty];
-            // Update player state and sync with database
+            
+            // Update player state
             setPlayer(prev => {
               const updatedPlayer = {
                 ...prev,
@@ -580,19 +581,19 @@ function App() {
         
         // Handle experience and leveling up for completed jobs
         if (jobsCompleted) {
-          const updatePlayerWithExp = async (prev: Player) => {
-            const completedJobs = updatedJobs.filter(j => j.status === 'completed');
-            let totalExp = 0;
+          const completedJobs = updatedJobs.filter(j => j.status === 'completed');
+          let totalExp = 0;
 
-            completedJobs.forEach(job => {
-              const expGained = expRewards[job.difficulty];
-              totalExp += expGained;
-              addMessage(`\n[EXP] +${expGained} experience points`);
-            });
+          completedJobs.forEach(job => {
+            const expGained = expRewards[job.difficulty];
+            totalExp += expGained;
+            addMessage(`\n[EXP] +${expGained} experience points`);
+          });
 
-            let newExp = prev.experience + totalExp;
-            let newLevel = prev.level;
-            let newSkillPoints = prev.skills.skillPoints;
+          setPlayer(prev => {
+            let newExp = player.experience + totalExp;
+            let newLevel = player.level;
+            let newSkillPoints = player.skills.skillPoints;
 
             // Level up if enough exp (1000 exp per level)
             while (newExp >= 1000) {
@@ -614,18 +615,14 @@ function App() {
             };
 
             // Sync with database
-            const success = await syncPlayerData({
+            syncPlayerData({
               level: newLevel,
               experience: newExp,
               skills: updatedPlayer.skills
             });
 
-            if (success) {
-              setPlayer(updatedPlayer);
-            }
-          };
-          
-          updatePlayerWithExp(player);
+            return updatedPlayer;
+          });
         }
 
         return updatedJobs;
@@ -724,9 +721,9 @@ function App() {
                   </div>
                 </div>
                 <div className="contracts-panel grid grid-cols-1 md:grid-cols-2 gap-6 h-[400px] lg:h-[600px] overflow-y-auto scrollbar-hide pr-2 pb-4 relative z-[1]">
-                  {jobs?.map(job => (
+                  {jobs?.map((job, index) => (
                     <JobCard
-                      key={job.id}
+                      key={`${job.id}-${index}`}
                       job={job}
                       onAccept={acceptJob}
                       disabled={

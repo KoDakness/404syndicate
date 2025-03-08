@@ -15,7 +15,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onAccept, disabled }) => 
       case 'corporate':
         return <Shield className="w-5 h-5 text-blue-400" />;
       case 'underground':
-        return job.type === 'social' 
+        return job?.type === 'social' 
           ? <Mail className="w-5 h-5 text-purple-400" />
           : <Ghost className="w-5 h-5 text-red-400" />;
       case 'freelance':
@@ -40,21 +40,21 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onAccept, disabled }) => 
     <div className="bg-black/50 border-2 sm:border-4 border-green-900/50 rounded-lg p-4 sm:p-6 hover:bg-green-900/10 transition-colors backdrop-blur-sm shadow-xl shadow-green-900/30">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          {getFactionIcon(job.faction)}
+          {job?.faction && getFactionIcon(job.faction)}
           <h3 className="text-green-400 font-bold font-mono text-sm sm:text-lg truncate flex-1">{job.name}</h3>
         </div>
         <span className={`text-xs px-2 py-0.5 rounded border ${getDifficultyColor(job.difficulty)} font-mono`}>
-          {job.difficulty.toUpperCase()}
+          {job?.difficulty?.toUpperCase() || 'UNKNOWN'}
         </span>
       </div>
       <p className="text-green-600 text-xs sm:text-base mb-4 sm:mb-6 font-mono min-h-[3rem] line-clamp-2">{job.description}</p>
       <div className="flex items-center justify-between">
         <div className="text-green-400 font-mono text-base sm:text-lg">
-          ${job.reward.toLocaleString()}
+          ${(job?.reward || 0).toLocaleString()}
         </div>
         <div className="flex items-center gap-2">
           {job.status === 'in-progress' && (
-            <div className="text-xs font-mono text-yellow-400">{job.progress}%</div>
+            <div className="text-xs font-mono text-yellow-400">{job?.progress || 0}%</div>
           )}
           <button
             onClick={() => {
