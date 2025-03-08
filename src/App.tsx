@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Terminal } from './components/Terminal';
 import { JobCard } from './components/JobCard';
 import { PlayerStats } from './components/PlayerStats';
+import { Tutorial } from './components/Tutorial';
 import { LoginForm } from './components/LoginForm';
 import { Toolbar } from './components/Toolbar';
 import { AdminPanel } from './components/AdminPanel';
@@ -56,6 +57,8 @@ function App() {
   const [showGhostIndicator, setShowGhostIndicator] = useState(true);
   const [eventKey, setEventKey] = useState(0);
   const [adminKeyPressed, setAdminKeyPressed] = useState(false);
+  const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [messages, setMessages] = useState<string[]>([
     'Initializing system...',
     'Connecting to network...',
@@ -366,6 +369,16 @@ function App() {
     addMessage('Admin: All event lockouts reset');
   };
 
+  const handleTutorialReset = () => {
+    setShowTutorial(true);
+    setPlayer(prev => ({
+      ...prev,
+      tutorial_completed: false,
+      tutorial_step: 0
+    }));
+    addMessage('Admin: Tutorial reset');
+  };
+
   // Auto-refresh contracts every 3 hours
   useEffect(() => {
     const interval = setInterval(() => {
@@ -591,9 +604,10 @@ function App() {
   }, [timeMultiplier]); // Add timeMultiplier to dependencies
 
   return (
-    <div className="min-h-screen bg-black text-green-400 p-4 sm:p-8 pb-48 overflow-x-hidden">
+    <div className="min-h-screen bg-black text-green-400 p-4 sm:p-8 pb-48 overflow-x-hidden relative">
+      <div className="matrix-bg fixed inset-0" />
       {showEventIndicator && (
-        <div className="fixed top-2 right-2 sm:top-4 sm:right-4 flex flex-col gap-2">
+        <div className="fixed top-2 right-2 sm:top-4 sm:right-4 flex flex-col gap-2 z-50">
           <div 
             className="bg-red-900/90 border-2 border-red-500 rounded-lg px-3 py-1 sm:px-4 sm:py-2 z-50 flex items-center gap-2 cursor-pointer hover:bg-red-900/70 transition-colors text-sm sm:text-base"
             onClick={() => {
@@ -625,28 +639,43 @@ function App() {
         </div>
       )}
       {showAdmin && (
-        <AdminPanel
+        <div className="relative z-[100]"><AdminPanel
           player={player}
           onUpdatePlayer={updatePlayer}
           onRefreshContracts={refreshContracts}
           onUpdateSpeed={updateTimeMultiplier}
           onResetEvent={handleEventReset}
+          onResetTutorial={handleTutorialReset}
           timeMultiplier={timeMultiplier}
-        />
+        /></div>
       )}
-      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-8">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-8 relative z-10">
         <h1 className="text-4xl font-bold text-center mb-8 text-green-500 font-mono tracking-wider">
           404 Syndicate
         </h1>
         
         {session ? (
           <>
-            <PlayerStats player={player} onLogout={handleLogout} />
+            <div className="player-stats">
+              <div className="relative z-[1]">
+                <PlayerStats player={player} onLogout={handleLogout} />
+              </div>
+            </div>
+            
+            {(!player.tutorial_completed || showTutorial) && (
+              <Tutorial
+                player={player}
+                onComplete={() => setShowTutorial(false)}
+                onUpdatePlayer={updatePlayer}
+                isAdmin={showAdmin}
+                onOpenPanel={setActivePanel}
+              />
+            )}
         
             <div className="grid grid-cols-1 gap-4 sm:gap-8">
               <div className="order-2">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold font-mono text-green-400">Available Contracts</h2>
+                  <h2 className="text-xl font-bold font-mono text-green-400 relative z-[1]">Available Contracts</h2>
                   <div className="flex items-center gap-4">
                     <span className="text-sm text-green-600 font-mono">
                       {jobs.filter(j => j.status === 'available').length} contracts
@@ -662,7 +691,7 @@ function App() {
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[400px] lg:h-[600px] overflow-y-auto scrollbar-hide pr-2 pb-4">
+                <div className="contracts-panel grid grid-cols-1 md:grid-cols-2 gap-6 h-[400px] lg:h-[600px] overflow-y-auto scrollbar-hide pr-2 pb-4 relative z-[1]">
                   {jobs?.map(job => (
                     <JobCard
                       key={job.id}
@@ -677,9 +706,11 @@ function App() {
                 </div>
               </div>
           
-              <div>
-                <h2 className="text-xl font-bold mb-4 font-mono text-green-400">Terminal</h2>
-                <Terminal messages={messages} />
+              <div className="terminal-panel">
+                <div className="terminal-panel">
+                  <h2 className="text-xl font-bold mb-4 font-mono text-green-400 relative z-[1]">Terminal</h2>
+                  <Terminal messages={messages} />
+                </div>
               </div>
             </div>
           </>
@@ -690,10 +721,12 @@ function App() {
         )}
       </div>
       
-      {session && <Toolbar
+      {session && <div className="relative z-[90]"><Toolbar
         equipment={availableEquipment}
         onPurchase={purchaseEquipment}
         onEquip={equipItem}
+        activePanel={activePanel}
+        onPanelChange={setActivePanel}
         onUnequip={unequipItem}
         eventKey={eventKey}
         isAdmin={showAdmin}
@@ -710,7 +743,7 @@ function App() {
           syncPlayerData({ torcoins: updatedPlayer.torcoins });
           addMessage(`[REWARD] Received ${torcoins} Torcoins!`);
         }}
-      />}
+      /></div>}
     </div>
   );
 }

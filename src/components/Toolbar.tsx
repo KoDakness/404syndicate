@@ -13,6 +13,8 @@ interface ToolbarProps {
   onPurchase: (id: string) => void;
   onEquip: (id: string) => void;
   onUnequip: (id: string) => void;
+  activePanel: string | null;
+  onPanelChange: (panel: string | null) => void;
   eventKey: number;
   isAdmin: boolean;
   playerCredits: number;
@@ -26,6 +28,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   equipment,
   onPurchase,
   onEquip,
+  activePanel,
+  onPanelChange,
   onUnequip,
   eventKey,
   isAdmin,
@@ -34,16 +38,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   player,
   onUpgradeSkill,
   onEventReward,
-}) => {
-  const [activePanel, setActivePanel] = useState<string | null>(null);
-
+}) => {  
   const togglePanel = (panelId: string) => {
     playSound('click');
-    setActivePanel(activePanel === panelId ? null : panelId);
+    onPanelChange(activePanel === panelId ? null : panelId);
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-black/90 border-t-4 border-green-900/50">
+    <div className="fixed bottom-0 left-0 right-0 bg-black/90 border-t-4 border-green-900/50 z-40">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-center gap-2 sm:gap-4 p-2 overflow-x-auto">
           <button
@@ -99,7 +101,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         </div>
         
         {activePanel && (
-          <div className="border-t-2 border-green-900/50 p-4">
+          <div className="border-t-2 border-green-900/50 p-4 relative">
             {activePanel === 'equipment' && (
               <EquipmentShop
                 equipment={equipment}

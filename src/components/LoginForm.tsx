@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Terminal as TerminalIcon, User, Lock } from 'lucide-react';
+import { Terminal as TerminalIcon, User, Lock, Github, Disc as Discord, Heart } from 'lucide-react';
 
 interface LoginFormProps {
   onLogin: () => void;
@@ -106,15 +106,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, addMessage }) => 
   };
 
   return (
-    <div className="bg-black/50 border-4 border-green-900/50 rounded-lg p-6 max-w-md mx-auto">
-      <div className="flex items-center gap-2 mb-6">
-        <TerminalIcon className="w-6 h-6 text-green-400" />
-        <h2 className="text-xl font-bold font-mono text-green-400">
-          {isLogin ? 'Access Terminal' : 'Create Account'}
-        </h2>
-      </div>
+    <div className="relative">
+      <div className="bg-black/50 border-4 border-green-900/50 rounded-lg p-6 max-w-md mx-auto relative z-10">
+        <div className="flex items-center gap-2 mb-6">
+          <TerminalIcon className="w-6 h-6 text-green-400" />
+          <h2 className="text-xl font-bold font-mono text-green-400">
+            {isLogin ? 'Access Terminal' : 'Create Account'}
+          </h2>
+        </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
         {!isLogin && (
           <div>
             <label className="block text-green-400 font-mono text-sm mb-1">Username</label>
@@ -177,14 +178,50 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, addMessage }) => 
           {loading ? 'Processing...' : isLogin ? 'Login' : 'Create Account'}
         </button>
 
-        <button
-          type="button"
-          onClick={() => setIsLogin(!isLogin)}
-          className="w-full text-green-600 font-mono text-sm hover:text-green-400"
-        >
-          {isLogin ? 'Need an account? Sign up' : 'Already have an account? Login'}
-        </button>
-      </form>
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="w-full text-green-600 font-mono text-sm hover:text-green-400"
+          >
+            {isLogin ? 'Need an account? Sign up' : 'Already have an account? Login'}
+          </button>
+          
+          <div className="mt-8 pt-4 border-t-2 border-green-900/50">
+            <div className="text-center text-green-600 font-mono text-sm mb-4">
+              Support 404 Syndicate Development
+            </div>
+            <div className="flex justify-center gap-4">
+              <a
+                href="https://discord.gg/QmdfwQH7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-1 rounded border border-green-900 hover:border-green-500 text-green-400 font-mono text-sm transition-colors"
+              >
+                <Discord className="w-4 h-4" />
+                <span>Discord</span>
+              </a>
+              <a
+                href="https://github.com/KoDarkness"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-1 rounded border border-green-900 hover:border-green-500 text-green-400 font-mono text-sm transition-colors"
+              >
+                <Github className="w-4 h-4" />
+                <span>GitHub</span>
+              </a>
+              <a
+                href="https://paypal.me/KoDarknee94"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-1 rounded border border-green-900 hover:border-green-500 text-green-400 font-mono text-sm transition-colors"
+              >
+                <Heart className="w-4 h-4" />
+                <span>Donate</span>
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

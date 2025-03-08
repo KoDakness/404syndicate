@@ -8,6 +8,7 @@ interface AdminPanelProps {
   onRefreshContracts: () => void;
   onUpdateSpeed: (multiplier: number) => void;
   onResetEvent?: () => void;
+  onResetTutorial?: () => void;
   timeMultiplier: number;
 }
 
@@ -17,6 +18,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onRefreshContracts,
   onUpdateSpeed,
   onResetEvent: handleEventReset,
+  onResetTutorial: handleTutorialReset,
   timeMultiplier
 }) => {
   const addCredits = (amount: number) => {
@@ -171,6 +173,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             className="w-full px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
           >
             Reset Event Lockout
+          </button>
+        </div>
+        
+        <div>
+          <div className="text-red-400 font-mono text-sm mb-2 flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            Tutorial Controls
+          </div>
+          <button
+            onClick={handleTutorialReset}
+            className="w-full px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
+          >
+            Reset Tutorial
           </button>
         </div>
       </div>

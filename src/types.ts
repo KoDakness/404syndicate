@@ -105,6 +105,9 @@ export interface Player {
   level: number;
   experience: number;
   maxConcurrentJobs: number;
+  tutorial_completed: boolean;
+  tutorial_step: number;
+  tutorial_seen_features: string[];
   skills: {
     decryption: number;
     firewall: number;

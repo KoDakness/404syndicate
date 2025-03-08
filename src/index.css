@@ -5,6 +5,7 @@
 body {
   background: linear-gradient(to bottom, #000000, #001a00);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Hide scrollbar but keep functionality */
@@ -17,11 +18,40 @@ body {
   display: none; /* Chrome, Safari and Opera */
 }
 
+/* Matrix rain effect */
+.matrix-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.15;
+  font-family: monospace;
+  font-size: 16px;
+  color: #0f0;
+  text-shadow: 0 0 5px #0f0;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 255, 0, 0) 0%,
+    rgba(0, 255, 0, 0.15) 50%,
+    rgba(0, 255, 0, 0) 100%
+  ), repeating-linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 49%,
+    rgba(0, 255, 0, 0.08) 50%,
+    transparent 51%,
+    transparent 100%
+  );
+  background-size: 100% 80px, 40px 100%;
+  animation: matrix-rain 8s linear infinite;
+  z-index: 0;
+}
+
 @keyframes matrix-rain {
   0% {
-    background-position: 0% 0%;
+    background-position: 0% 0%, 0% 0%;
   }
   100% {
-    background-position: 0% 100%;
+    background-position: 0% 100%, 100% 0%;
   }
 }
