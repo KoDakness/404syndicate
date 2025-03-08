@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Unlock } from 'lucide-react';
+import { Lock, Unlock, Mail } from 'lucide-react';
 import type { Player } from '../types';
 
 interface SkillTreeProps {
@@ -28,6 +28,13 @@ export const SkillTree: React.FC<SkillTreeProps> = ({ player, onUpgradeSkill }) 
       name: 'Spoofing',
       description: 'Mask your digital footprint',
       level: player.skills.spoofing,
+      maxLevel: 99,
+    },
+    {
+      id: 'social',
+      name: 'Social Engineering',
+      description: 'Manipulate people through deception and psychology',
+      level: player.skills.social,
       maxLevel: 99,
     },
   ];

@@ -2,6 +2,102 @@ import { Job } from '../types';
 
 export const availableJobs: Job[] = [
   {
+    id: 'social_phish_001',
+    name: 'Password Reset Phishing Attack',
+    description: 'Create a convincing security alert to obtain executive credentials.',
+    duration: 300000, // 5 minutes
+    reward: 25000,
+    type: 'social',
+    riskLevel: 'high',
+    skillRequirements: {
+      social: 2,
+      spoofing: 1,
+    },
+    messages: [
+      "Analyzing executive communication patterns...",
+      "Crafting security alert template...",
+      "Spoofing ArasakaCorp security domain...",
+      "Deploying fake login portal...",
+      "Monitoring credential capture..."
+    ],
+    difficulty: 'hard',
+    faction: 'underground',
+    status: 'available',
+    progress: 0
+  },
+  {
+    id: 'social_malware_001',
+    name: 'Bonus Voucher Malware Campaign',
+    description: 'Deploy malware through an enticing employee bonus offer.',
+    duration: 240000, // 4 minutes
+    reward: 18000,
+    type: 'social',
+    riskLevel: 'medium',
+    skillRequirements: {
+      social: 1,
+      spoofing: 2,
+    },
+    messages: [
+      "Creating convincing bonus document...",
+      "Embedding stealth malware payload...",
+      "Bypassing antivirus signatures...",
+      "Deploying email campaign...",
+      "Monitoring infection status..."
+    ],
+    difficulty: 'medium',
+    faction: 'underground',
+    status: 'available',
+    progress: 0
+  },
+  {
+    id: 'social_ceo_001',
+    name: 'CEO File Transfer Impersonation',
+    description: 'Pose as the CEO to obtain confidential corporate files.',
+    duration: 180000, // 3 minutes
+    reward: 30000,
+    type: 'social',
+    riskLevel: 'high',
+    skillRequirements: {
+      social: 3,
+      spoofing: 2,
+    },
+    messages: [
+      "Analyzing CEO writing patterns...",
+      "Crafting urgent request email...",
+      "Spoofing executive email chain...",
+      "Deploying time-pressure tactics...",
+      "Awaiting file transfer..."
+    ],
+    difficulty: 'hard',
+    faction: 'underground',
+    status: 'available',
+    progress: 0
+  },
+  {
+    id: 'social_update_001',
+    name: 'Fake Security Update Attack',
+    description: 'Trick IT staff into installing a compromised security patch.',
+    duration: 360000, // 6 minutes
+    reward: 35000,
+    type: 'social',
+    riskLevel: 'high',
+    skillRequirements: {
+      social: 2,
+      spoofing: 3,
+    },
+    messages: [
+      "Preparing fake security update...",
+      "Modifying file signatures...",
+      "Bypassing security checksum...",
+      "Deploying to IT network...",
+      "Monitoring installation status..."
+    ],
+    difficulty: 'hard',
+    faction: 'underground',
+    status: 'available',
+    progress: 0
+  },
+  {
     id: 'job1',
     name: 'Corporate Firewall Breach',
     description: 'Bypass Arasaka Corp\'s security system to extract employee records.',
@@ -353,6 +449,77 @@ export const availableJobs: Job[] = [
     ],
     difficulty: 'easy',
     faction: 'corporate',
+    status: 'available',
+    progress: 0
+  },
+  {
+    id: 'social1',
+    name: 'Corporate Phishing Campaign',
+    description: 'Create a convincing email to trick corporate employees into revealing sensitive data.',
+    duration: 300000, // 5 minutes
+    reward: 12000,
+    type: 'social',
+    riskLevel: 'medium',
+    skillRequirements: {
+      social: 1,
+      spoofing: 1,
+    },
+    messages: [
+      "Analyzing corporate communication patterns...",
+      "Crafting email template...",
+      "Spoofing sender address...",
+      "Deploying phishing campaign...",
+      "Collecting responses..."
+    ],
+    difficulty: 'medium',
+    faction: 'underground',
+    status: 'available',
+    progress: 0
+  },
+  {
+    id: 'social2',
+    name: 'Executive Impersonation',
+    description: 'Pose as a high-ranking executive to request an emergency fund transfer.',
+    duration: 600000, // 10 minutes
+    reward: 25000,
+    type: 'social',
+    riskLevel: 'high',
+    skillRequirements: {
+      social: 2,
+      spoofing: 2,
+    },
+    messages: [
+      "Building executive profile...",
+      "Mimicking writing style...",
+      "Creating urgent scenario...",
+      "Sending transfer request...",
+      "Monitoring response..."
+    ],
+    difficulty: 'hard',
+    faction: 'underground',
+    status: 'available',
+    progress: 0
+  },
+  {
+    id: 'social3',
+    name: 'Help Desk Infiltration',
+    description: 'Convince IT support to reset credentials for a "locked" account.',
+    duration: 240000, // 4 minutes
+    reward: 8000,
+    type: 'social',
+    riskLevel: 'low',
+    skillRequirements: {
+      social: 1,
+    },
+    messages: [
+      "Researching company protocols...",
+      "Preparing support ticket...",
+      "Engaging with help desk...",
+      "Following up on request...",
+      "Access granted..."
+    ],
+    difficulty: 'easy',
+    faction: 'underground',
     status: 'available',
     progress: 0
   }

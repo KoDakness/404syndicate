@@ -1,6 +1,7 @@
 import React from 'react';
 import { Job } from '../types';
-import { Shield, Cpu, Ghost } from 'lucide-react';
+import { Shield, Cpu, Ghost, Mail } from 'lucide-react';
+import { playSound } from '../lib/sounds';
 
 interface JobCardProps {
   job: Job;
@@ -14,9 +15,13 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onAccept, disabled }) => 
       case 'corporate':
         return <Shield className="w-5 h-5 text-blue-400" />;
       case 'underground':
-        return <Ghost className="w-5 h-5 text-red-400" />;
+        return job.type === 'social' 
+          ? <Mail className="w-5 h-5 text-purple-400" />
+          : <Ghost className="w-5 h-5 text-red-400" />;
       case 'freelance':
         return <Cpu className="w-5 h-5 text-green-400" />;
+      case 'social':
+        return <Mail className="w-5 h-5 text-purple-400" />;
     }
   };
 
@@ -32,19 +37,19 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onAccept, disabled }) => 
   };
 
   return (
-    <div className="bg-black/50 border-2 sm:border-4 border-green-900/50 rounded-lg p-3 sm:p-4 hover:bg-green-900/10 transition-colors backdrop-blur-sm shadow-xl shadow-green-900/30">
+    <div className="bg-black/50 border-2 sm:border-4 border-green-900/50 rounded-lg p-4 sm:p-6 hover:bg-green-900/10 transition-colors backdrop-blur-sm shadow-xl shadow-green-900/30">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {getFactionIcon(job.faction)}
-          <h3 className="text-green-400 font-bold font-mono text-sm sm:text-base">{job.name}</h3>
+          <h3 className="text-green-400 font-bold font-mono text-sm sm:text-lg truncate flex-1">{job.name}</h3>
         </div>
         <span className={`text-xs px-2 py-0.5 rounded border ${getDifficultyColor(job.difficulty)} font-mono`}>
           {job.difficulty.toUpperCase()}
         </span>
       </div>
-      <p className="text-green-600 text-xs sm:text-sm mb-3 sm:mb-4 font-mono">{job.description}</p>
+      <p className="text-green-600 text-xs sm:text-base mb-4 sm:mb-6 font-mono min-h-[3rem] line-clamp-2">{job.description}</p>
       <div className="flex items-center justify-between">
-        <div className="text-green-400 font-mono text-sm sm:text-base">
+        <div className="text-green-400 font-mono text-base sm:text-lg">
           ${job.reward.toLocaleString()}
         </div>
         <div className="flex items-center gap-2">
@@ -52,7 +57,10 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onAccept, disabled }) => 
             <div className="text-xs font-mono text-yellow-400">{job.progress}%</div>
           )}
           <button
-            onClick={() => onAccept(job)}
+            onClick={() => {
+              playSound('click');
+              onAccept(job);
+            }}
             disabled={disabled}
             className={`px-3 py-1 rounded border-2 border-green-500 bg-black/50 text-green-400 text-xs font-mono
               ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-900/30'}`}

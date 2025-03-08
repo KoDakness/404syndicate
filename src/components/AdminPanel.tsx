@@ -16,7 +16,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onUpdatePlayer,
   onRefreshContracts,
   onUpdateSpeed,
-  onResetEvent,
+  onResetEvent: handleEventReset,
   timeMultiplier
 }) => {
   const addCredits = (amount: number) => {
@@ -167,7 +167,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             Event Controls
           </div>
           <button
-            onClick={onResetEvent}
+            onClick={handleEventReset}
             className="w-full px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
           >
             Reset Event Lockout

@@ -5,6 +5,7 @@ import { EquipmentShop } from './EquipmentShop';
 import { SkillTree } from './SkillTree';
 import { Leaderboard } from './Leaderboard';
 import { EventPanel } from './EventPanel';
+import { playSound } from '../lib/sounds';
 import type { Equipment, Player } from '../types';
 
 interface ToolbarProps {
@@ -18,6 +19,7 @@ interface ToolbarProps {
   playerTorcoins: number;
   player: Player;
   onUpgradeSkill: (skill: keyof Player['skills']) => void;
+  onEventReward: (torcoins: number) => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -31,10 +33,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   playerTorcoins,
   player,
   onUpgradeSkill,
+  onEventReward,
 }) => {
   const [activePanel, setActivePanel] = useState<string | null>(null);
 
   const togglePanel = (panelId: string) => {
+    playSound('click');
     setActivePanel(activePanel === panelId ? null : panelId);
   };
 
@@ -114,7 +118,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               />
             )}
             {activePanel === 'events' && (
-              <EventPanel key={eventKey} isAdmin={isAdmin} />
+              <EventPanel 
+                key={eventKey} 
+                isAdmin={isAdmin} 
+                onReward={(torcoins) => {
+                  onEventReward(torcoins);
+                }}
+              />
             )}
             {activePanel === 'leaderboard' && (
               <Leaderboard />

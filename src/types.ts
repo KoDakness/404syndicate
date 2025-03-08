@@ -8,9 +8,10 @@ export interface Job {
     decryption?: number;
     firewall?: number;
     spoofing?: number;
+    social?: number;
   };
   riskLevel: 'low' | 'medium' | 'high';
-  type: 'hack' | 'decrypt' | 'infiltrate' | 'analyze' | 'exploit';
+  type: 'hack' | 'decrypt' | 'infiltrate' | 'analyze' | 'exploit' | 'social';
   difficulty: 'easy' | 'medium' | 'hard';
   faction: 'corporate' | 'underground' | 'freelance';
   messages: string[];
@@ -56,6 +57,9 @@ export interface RandomEvent {
   id: string;
   type: 'threat' | 'opportunity' | 'challenge';
   name: string;
+  attempts: number;
+  max_attempts: number;
+  lockout_until: string | null;
   description: string;
   status?: 'active' | 'completed' | 'failed';
   puzzle?: {
@@ -85,7 +89,9 @@ export interface RandomEvent {
 export interface Player {
   credits: number;
   torcoins: number;
-  lastRefresh: string | null;
+  last_contract_refresh: string | null;
+  next_contract_refresh: string | null;
+  manual_refresh_available: boolean;
   reputation: {
     corporate: number;
     underground: number;
@@ -103,6 +109,7 @@ export interface Player {
     decryption: number;
     firewall: number;
     spoofing: number;
+    social: number;
     skillPoints: number;
   };
   activeJobs: string[];
