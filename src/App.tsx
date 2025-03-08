@@ -314,10 +314,10 @@ function App() {
   }, [timeMultiplier]); // Add timeMultiplier to dependencies
 
   return (
-    <div className="h-screen bg-black text-green-400 p-8 pb-48 overflow-hidden">
+    <div className="min-h-screen bg-black text-green-400 p-4 sm:p-8 pb-48 overflow-x-hidden">
       {showEventIndicator && (
         <div 
-          className="fixed top-4 right-4 bg-red-900/90 border-2 border-red-500 rounded-lg px-4 py-2 z-50 flex items-center gap-2 cursor-pointer hover:bg-red-900/70 transition-colors"
+          className="fixed top-2 right-2 sm:top-4 sm:right-4 bg-red-900/90 border-2 border-red-500 rounded-lg px-3 py-1 sm:px-4 sm:py-2 z-50 flex items-center gap-2 cursor-pointer hover:bg-red-900/70 transition-colors text-sm sm:text-base"
           onClick={() => {
             const toolbar = document.querySelector('[data-panel="events"]');
             if (toolbar) {
@@ -340,15 +340,15 @@ function App() {
           timeMultiplier={timeMultiplier}
         />
       )}
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-8">
         <h1 className="text-4xl font-bold text-center mb-8 text-green-500 font-mono tracking-wider">
           404 Syndicate
         </h1>
         
         <PlayerStats player={player} />
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+          <div className="lg:col-span-1 order-2 lg:order-1">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold font-mono text-green-400">Available Contracts</h2>
               <div className="flex items-center gap-4">
@@ -363,7 +363,7 @@ function App() {
                 </button>
               </div>
             </div>
-            <div className="space-y-4 h-[600px] overflow-y-auto scrollbar-hide pr-2">
+            <div className="space-y-2 sm:space-y-4 h-[400px] lg:h-[600px] overflow-y-auto scrollbar-hide pr-2">
               {jobs.map(job => (
                 <JobCard
                   key={job.id}

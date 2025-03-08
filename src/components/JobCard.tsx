@@ -32,19 +32,19 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onAccept, disabled }) => 
   };
 
   return (
-    <div className="bg-black/50 border-4 border-green-900/50 rounded-lg p-4 hover:bg-green-900/10 transition-colors backdrop-blur-sm shadow-xl shadow-green-900/30">
+    <div className="bg-black/50 border-2 sm:border-4 border-green-900/50 rounded-lg p-3 sm:p-4 hover:bg-green-900/10 transition-colors backdrop-blur-sm shadow-xl shadow-green-900/30">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {getFactionIcon(job.faction)}
-          <h3 className="text-green-400 font-bold font-mono">{job.name}</h3>
+          <h3 className="text-green-400 font-bold font-mono text-sm sm:text-base">{job.name}</h3>
         </div>
         <span className={`text-xs px-2 py-0.5 rounded border ${getDifficultyColor(job.difficulty)} font-mono`}>
           {job.difficulty.toUpperCase()}
         </span>
       </div>
-      <p className="text-green-600 text-sm mb-4 font-mono">{job.description}</p>
+      <p className="text-green-600 text-xs sm:text-sm mb-3 sm:mb-4 font-mono">{job.description}</p>
       <div className="flex items-center justify-between">
-        <div className="text-green-400 font-mono">
+        <div className="text-green-400 font-mono text-sm sm:text-base">
           ${job.reward.toLocaleString()}
         </div>
         <div className="flex items-center gap-2">

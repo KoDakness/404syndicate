@@ -15,13 +15,13 @@ export const Terminal: React.FC<TerminalProps> = ({ messages }) => {
   }, [messages]);
 
   return (
-    <div className="bg-black/90 border-4 border-green-900/50 rounded-lg p-6 font-mono text-sm h-[600px] overflow-y-auto scrollbar-hide shadow-xl shadow-green-900/30" ref={terminalRef}>
+    <div className="bg-black/90 border-2 sm:border-4 border-green-900/50 rounded-lg p-3 sm:p-6 font-mono text-xs sm:text-sm h-[400px] lg:h-[600px] overflow-y-auto scrollbar-hide shadow-xl shadow-green-900/30" ref={terminalRef}>
       {messages.map((message, index) => (
-        <div key={index} className="text-green-400 mb-2 leading-relaxed whitespace-pre-wrap">
+        <div key={index} className="text-green-400 mb-1 sm:mb-2 leading-relaxed whitespace-pre-wrap">
           <span className="text-blue-400">{'>'}</span> {message}
         </div>
       ))}
-      <div className="text-green-400 animate-pulse mt-2">
+      <div className="text-green-400 animate-pulse mt-1 sm:mt-2">
         <span className="text-blue-400">{'>'}</span> _
       </div>
     </div>

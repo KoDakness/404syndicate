@@ -41,10 +41,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-black/90 border-t-4 border-green-900/50">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-center gap-4 p-2">
+        <div className="flex justify-center gap-2 sm:gap-4 p-2 overflow-x-auto">
           <button
             onClick={() => togglePanel('equipment')}
-            className={`flex items-center gap-2 px-4 py-2 rounded border-2 ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded border-2 whitespace-nowrap text-sm sm:text-base ${
               activePanel === 'equipment' 
                 ? 'bg-green-900/30 border-green-400' 
                 : 'border-green-900/50 hover:border-green-400'
@@ -55,7 +55,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </button>
           <button
             onClick={() => togglePanel('skills')}
-            className={`flex items-center gap-2 px-4 py-2 rounded border-2 ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded border-2 whitespace-nowrap text-sm sm:text-base ${
               activePanel === 'skills' 
                 ? 'bg-green-900/30 border-green-400' 
                 : 'border-green-900/50 hover:border-green-400'
@@ -72,7 +72,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <button
             onClick={() => togglePanel('events')}
             data-panel="events"
-            className={`flex items-center gap-2 px-4 py-2 rounded border-2 ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded border-2 whitespace-nowrap text-sm sm:text-base ${
               activePanel === 'events' 
                 ? 'bg-green-900/30 border-green-400' 
                 : 'border-green-900/50 hover:border-green-400'
@@ -83,7 +83,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </button>
           <button
             onClick={() => togglePanel('leaderboard')}
-            className={`flex items-center gap-2 px-4 py-2 rounded border-2 ${
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded border-2 whitespace-nowrap text-sm sm:text-base ${
               activePanel === 'leaderboard' 
                 ? 'bg-green-900/30 border-green-400' 
                 : 'border-green-900/50 hover:border-green-400'
