@@ -90,43 +90,37 @@ export const Leaderboard: React.FC = () => {
             Top Hackers
           </h3>
           <div className="space-y-2 overflow-y-auto flex-1 pr-2 scrollbar-hide">
-            {players.length > 0 ? (
-              players.map((player, index) => (
-                <div
-                  key={player.id}
-                  className="bg-black/50 border-2 border-green-900/50 rounded-lg p-3 flex items-center justify-between hover:bg-green-900/10 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="text-lg font-bold font-mono text-green-500 w-8">
-                      {index + 1}
-                    </span>
-                    <div>
-                      <div className="font-mono text-green-400">{player.username}</div>
-                      <div className="flex items-center gap-3 mt-1">
-                        {player.wraithcoins > 0 && (
-                          <span className="text-sm text-purple-400 font-mono flex items-center gap-1">
-                            <Skull className="w-3 h-3" /> {player.wraithcoins}
-                          </span>
-                        )}
-                        <span className="text-sm text-yellow-400 font-mono flex items-center gap-1">
-                          <Bitcoin className="w-3 h-3" /> {player.torcoins}
+            {players.map((player, index) => (
+              <div
+                key={player.id}
+                className="bg-black/50 border-2 border-green-900/50 rounded-lg p-3 flex items-center justify-between hover:bg-green-900/10 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <span className="text-lg font-bold font-mono text-green-500 w-8">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <div className="font-mono text-green-400">{player.username}</div>
+                    <div className="flex items-center gap-3 mt-1">
+                      {player.wraithcoins > 0 && (
+                        <span className="text-sm text-purple-400 font-mono flex items-center gap-1">
+                          <Skull className="w-3 h-3" /> {player.wraithcoins}
                         </span>
-                        <span className="text-sm text-green-600 font-mono flex items-center gap-1">
-                          <Award className="w-3 h-3" /> {player.level}
-                        </span>
-                        <span className="text-sm text-green-600 font-mono">
-                          ${player.credits.toLocaleString()}
-                        </span>
-                      </div>
+                      )}
+                      <span className="text-sm text-yellow-400 font-mono flex items-center gap-1">
+                        <Bitcoin className="w-3 h-3" /> {player.torcoins}
+                      </span>
+                      <span className="text-sm text-green-600 font-mono flex items-center gap-1">
+                        <Award className="w-3 h-3" /> {player.level}
+                      </span>
+                      <span className="text-sm text-green-600 font-mono">
+                        ${player.credits.toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-green-600 font-mono">
-                Loading leaderboard data...
               </div>
-            )}
+            ))}
           </div>
         </div>
         
