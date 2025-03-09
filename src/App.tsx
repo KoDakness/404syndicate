@@ -229,10 +229,10 @@ function App() {
   const syncPlayerData = async (updates: Partial<Player>) => {
     if (!session?.user?.id) return;
     
-    // Ensure JSON fields are properly formatted
+    // Convert equipment object to string if it exists
     const sanitizedUpdates = {
       ...updates,
-      equipment: updates.equipment ? JSON.stringify(updates.equipment) : undefined,
+      equipment: updates.equipment ? updates.equipment : undefined,
       skills: updates.skills ? JSON.stringify(updates.skills) : undefined,
       reputation: updates.reputation ? JSON.stringify(updates.reputation) : undefined,
       inventory: updates.inventory ? JSON.stringify(updates.inventory) : undefined
