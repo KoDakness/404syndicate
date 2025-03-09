@@ -12,7 +12,7 @@ import { availableJobs } from './data/jobs';
 import { availableEquipment } from './data/equipment';
 import { supabase } from './lib/supabase';
 import { playSound } from './lib/sounds';
-import type { Job, Player } from './types';
+import type { Job, Player, Equipment, EquipmentLoadout } from './types';
 
 // Helper function to get stored contracts from localStorage
 function getStoredContracts(): Job[] | null {
@@ -42,15 +42,16 @@ const initialPlayer: Player = {
   credits: 1000,
   torcoins: 0,
   lastRefresh: null,
+  loadouts: [],
   reputation: {
     corporate: 0,
     underground: 0,
   },
-  equipment: {
-    equipped: [] as Equipment[],
-    inventory: [] as Equipment[]
+  inventory: {
+    bases: [],
+    motherboards: [],
+    components: []
   },
-  inventory: [],
   activeEvents: [],
   level: 1,
   experience: 0,
@@ -87,6 +88,16 @@ function App() {
   ]);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<{[key: string]: number}>({});
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+  const [databaseEquipment, setDatabaseEquipment] = useState<{
+    bases: any[],
+    motherboards: any[],
+    components: any[]
+  }>({
+    bases: [],
+    motherboards: [],
+    components: []
+  });
+  const [isLoadingEquipment, setIsLoadingEquipment] = useState(false);
 
   const handleLogout = async () => {
     // Save stats before logout
@@ -122,12 +133,74 @@ function App() {
     setMessages(prev => [...prev, message]);
   };
 
+  // Fetch available equipment from database
+  const fetchEquipment = async () => {
+    try {
+      setIsLoadingEquipment(true);
+      // Fetch bases
+      const { data: basesData, error: basesError } = await supabase
+        .from('equipment_bases')
+        .select('*');
+
+      if (basesError) {
+        console.error('Error fetching bases:', basesError);
+        addMessage('ERROR: Failed to fetch equipment data');
+        setIsLoadingEquipment(false);
+        return;
+      }
+
+      // Fetch motherboards
+      const { data: motherboardsData, error: motherboardsError } = await supabase
+        .from('equipment_motherboards')
+        .select('*');
+
+      if (motherboardsError) {
+        console.error('Error fetching motherboards:', motherboardsError);
+        addMessage('ERROR: Failed to fetch equipment data');
+        setIsLoadingEquipment(false);
+        return;
+      }
+
+      // Fetch components
+      const { data: componentsData, error: componentsError } = await supabase
+        .from('equipment_components')
+        .select('*');
+
+      if (componentsError) {
+        console.error('Error fetching components:', componentsError);
+        addMessage('ERROR: Failed to fetch equipment data');
+        setIsLoadingEquipment(false);
+        return;
+      }
+
+      setDatabaseEquipment({
+        bases: basesData || [],
+        motherboards: motherboardsData || [],
+        components: componentsData || []
+      });
+
+      console.log('Equipment data loaded from database:', {
+        bases: basesData?.length || 0,
+        motherboards: motherboardsData?.length || 0,
+        components: componentsData?.length || 0
+      });
+      setIsLoadingEquipment(false);
+    } catch (error) {
+      console.error('Error in fetchEquipment:', error);
+      addMessage('ERROR: Failed to fetch equipment data');
+      setIsLoadingEquipment(false);
+    }
+  };
+
   const handleLogin = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setSession(session);
-
+    
     if (session) {
       addMessage('Establishing secure connection...');
+
+      // Fetch equipment data
+      await fetchEquipment();
 
       // Fetch active jobs from database
       const { data: activeJobsData, error: activeJobsError } = await supabase
@@ -230,7 +303,11 @@ function App() {
             : playerData.skills,
           equipment: playerData.equipment,
           reputation: playerData.reputation,
-          inventory: playerData.inventory,
+          inventory: {
+            bases: playerData.inventory?.bases || [],
+            motherboards: playerData.inventory?.motherboards || [],
+            components: playerData.inventory?.components || []
+          },
           tutorial_completed: playerData.tutorial_completed || false,
           tutorial_step: playerData.tutorial_step || 0,
           tutorial_seen_features: playerData.tutorial_seen_features || [],
@@ -246,6 +323,81 @@ function App() {
           setNextRefresh(nextRefresh);
         }
       }
+      
+      // Fetch player loadouts
+      fetchPlayerLoadouts(session.user.id);
+    }
+  };
+  
+  // Fetch player loadouts from database
+  const fetchPlayerLoadouts = async (playerId: string) => {
+    try {
+      const { data: loadoutsData, error: loadoutsError } = await supabase
+        .from('player_equipment_loadouts')
+        .select('*')
+        .eq('player_id', playerId);
+        
+      if (loadoutsError) {
+        addMessage(`ERROR: Failed to fetch loadouts - ${loadoutsError.message}`);
+        return;
+      }
+      
+      if (loadoutsData && loadoutsData.length > 0) {
+        // Create a lookup map to find frontend equipment by name
+        const findFrontendEquipment = (type: 'base' | 'motherboard' | 'component', dbId: string) => {
+          const dbItem = type === 'base' 
+            ? databaseEquipment.bases.find(b => b.id === dbId)
+            : type === 'motherboard'
+              ? databaseEquipment.motherboards.find(m => m.id === dbId)
+              : databaseEquipment.components.find(c => c.id === dbId);
+          
+          if (!dbItem) return null;
+          
+          return availableEquipment.find(e => 
+            e.type === type && e.name === dbItem.name
+          );
+        };
+        
+        const loadouts: EquipmentLoadout[] = loadoutsData.map(loadout => {
+          // Find matching frontend IDs based on name
+          const frontendBase = findFrontendEquipment('base', loadout.base_id);
+          const frontendMotherboard = findFrontendEquipment('motherboard', loadout.motherboard_id);
+          
+          // Map installed components to frontend IDs
+          const installedComponents: Record<string, string> = {};
+          
+          // Process each installed component
+          Object.entries(loadout.installed_components || {}).forEach(([slot, componentId]) => {
+            if (typeof componentId === 'string') {
+              const frontendComponent = findFrontendEquipment('component', componentId as string);
+              if (frontendComponent) {
+                installedComponents[slot] = frontendComponent.id;
+              } else {
+                installedComponents[slot] = componentId as string;
+              }
+            }
+          });
+          
+          return {
+            id: loadout.id,
+            baseId: frontendBase?.id || loadout.base_id,
+            motherboardId: frontendMotherboard?.id || loadout.motherboard_id,
+            installedComponents: installedComponents,
+            active: loadout.active,
+            stats: {},
+            specialEffects: []
+          };
+        });
+        
+        console.log("Loaded loadouts:", loadouts);
+        setPlayer(prev => ({
+          ...prev,
+          loadouts
+        }));
+      }
+    } catch (error) {
+      console.error('Error in fetchPlayerLoadouts:', error);
+      addMessage(`ERROR: Failed to fetch loadouts - ${(error as Error).message}`);
     }
   };
 
@@ -364,13 +516,15 @@ function App() {
   const syncPlayerData = async (updates: Partial<Player>) => {
     if (!session?.user?.id) return;
     
-    // Convert equipment object to string if it exists
     const sanitizedUpdates = {
       ...updates,
-      equipment: updates.equipment ? updates.equipment : undefined,
       skills: updates.skills ? JSON.stringify(updates.skills) : undefined,
       reputation: updates.reputation ? JSON.stringify(updates.reputation) : undefined,
-      inventory: updates.inventory ? JSON.stringify(updates.inventory) : undefined
+      inventory: updates.inventory ? {
+        bases: updates.inventory.bases || [],
+        motherboards: updates.inventory.motherboards || [],
+        components: updates.inventory.components || []
+      } : undefined
     };
 
     const { error } = await supabase
@@ -386,6 +540,52 @@ function App() {
     return true;
   };
 
+  // Helper function to get DB equipment ID from frontend ID
+  const getDatabaseEquipmentId = (frontendId: string, type: 'base' | 'motherboard' | 'component'): string | null => {
+    try {
+      const frontendItem = availableEquipment.find(e => e.id === frontendId);
+      if (!frontendItem) {
+        console.error(`Frontend item not found for ID: ${frontendId} of type ${type}`);
+        return null;
+      }
+      
+      if (type === 'base') {
+        const baseItem = databaseEquipment.bases.find(
+          base => base.name === frontendItem.name
+        );
+        
+        if (baseItem) {
+          console.log(`Mapped frontend base ID ${frontendId} to database ID ${baseItem.id}`);
+          return baseItem.id;
+        }
+      } else if (type === 'motherboard') {
+        const mbItem = databaseEquipment.motherboards.find(
+          mb => mb.name === frontendItem.name
+        );
+        
+        if (mbItem) {
+          console.log(`Mapped frontend motherboard ID ${frontendId} to database ID ${mbItem.id}`);
+          return mbItem.id;
+        }
+      } else if (type === 'component') {
+        const componentItem = databaseEquipment.components.find(
+          comp => comp.name === frontendItem.name
+        );
+        
+        if (componentItem) {
+          console.log(`Mapped frontend component ID ${frontendId} to database ID ${componentItem.id}`);
+          return componentItem.id;
+        }
+      }
+      
+      console.error(`Failed to find database ID for ${type} with frontend ID: ${frontendId}`);
+      return null;
+    } catch (err) {
+      console.error('Error getting database equipment ID:', err);
+      return null;
+    }
+  };
+
   const purchaseEquipment = async (equipmentId: string) => {
     const equipment = availableEquipment.find(e => e.id === equipmentId);
     if (!equipment) return;
@@ -395,32 +595,381 @@ function App() {
       return;
     }
     
-    const inventoryCount = player.equipment?.inventory?.length || 0;
-    const equippedCount = player.equipment?.equipped?.length || 0;
+    if (equipment.torcoinCost && player.torcoins < equipment.torcoinCost) {
+      addMessage(`Insufficient torcoins for ${equipment.name}`);
+      return;
+    }
     
-    if (inventoryCount + equippedCount >= 10) {
+    // Get total count based on equipment type
+    let totalCount = 0;
+    if (equipment.type === 'base') {
+      totalCount = (player.inventory.bases || []).length;
+    } else if (equipment.type === 'motherboard') {
+      totalCount = (player.inventory.motherboards || []).length;
+    } else if (equipment.type === 'component') {
+      totalCount = (player.inventory.components || []).length;
+    }
+    
+    if (totalCount >= 10) {
       addMessage('ERROR: Maximum equipment capacity reached');
       return;
     }
-
+    
     const updatedPlayer = {
       ...player,
-      credits: player.credits - equipment.cost,
-      equipment: {
-        equipped: player.equipment?.equipped || [],
-        inventory: [...(player.equipment?.inventory || []), equipment]
+      credits: player.credits - (equipment.cost || 0),
+      torcoins: player.torcoins - (equipment.torcoinCost || 0),
+      inventory: {
+        ...player.inventory,
+        bases: equipment.type === 'base' 
+          ? [...(player.inventory.bases || []), equipment]
+          : (player.inventory.bases || []),
+        motherboards: equipment.type === 'motherboard'
+          ? [...(player.inventory.motherboards || []), equipment]
+          : (player.inventory.motherboards || []),
+        components: equipment.type === 'component'
+          ? [...(player.inventory.components || []), equipment]
+          : (player.inventory.components || [])
       }
     };
-
+    
     // Update database first
     const success = await syncPlayerData({
       credits: updatedPlayer.credits,
-      equipment: updatedPlayer.equipment
+      torcoins: updatedPlayer.torcoins,
+      inventory: updatedPlayer.inventory
     });
-
+    
     if (success) {
       setPlayer(updatedPlayer);
-      addMessage(`Purchased ${equipment.name}`);
+      playSound('complete');
+      addMessage(`Purchased ${equipment.name} for ${equipment.cost.toLocaleString()} credits${
+        equipment.torcoinCost ? ` and ${equipment.torcoinCost} torcoins` : ''
+      }`);
+    }
+  };
+
+  const createLoadout = async (baseId: string, motherboardId: string) => {
+    if (!session?.user?.id) {
+      addMessage('ERROR: Not logged in');
+      return;
+    }
+    
+    // Check if player already has the maximum number of loadouts (2)
+    if (player.loadouts.length >= 2) {
+      addMessage('ERROR: Maximum number of loadouts (2) reached. Delete a loadout first.');
+      return;
+    }
+    
+    console.log(`Creating loadout with base ${baseId} and motherboard ${motherboardId}`);
+    
+    // Check if database equipment is loaded
+    if (databaseEquipment.bases.length === 0 || databaseEquipment.motherboards.length === 0) {
+      console.log("Database equipment not loaded, fetching again...");
+      await fetchEquipment();
+    }
+    
+    // Get database IDs for base and motherboard
+    const dbBaseId = getDatabaseEquipmentId(baseId, 'base');
+    const dbMotherboardId = getDatabaseEquipmentId(motherboardId, 'motherboard');
+    
+    if (!dbBaseId) {
+      console.error(`Failed to find database ID for base ${baseId}`);
+      addMessage('ERROR: Base equipment not found in database');
+      return;
+    }
+    
+    if (!dbMotherboardId) {
+      console.error(`Failed to find database ID for motherboard ${motherboardId}`);
+      addMessage('ERROR: Motherboard not found in database');
+      return;
+    }
+    
+    console.log(`Mapped IDs: base ${baseId} -> ${dbBaseId}, motherboard ${motherboardId} -> ${dbMotherboardId}`);
+    
+    // Insert new loadout into database
+    try {
+      const { data: newLoadout, error } = await supabase
+        .from('player_equipment_loadouts')
+        .insert({
+          player_id: session.user.id,
+          base_id: dbBaseId,
+          motherboard_id: dbMotherboardId,
+          installed_components: {},
+          active: player.loadouts.length === 0 // Make active if it's the first loadout
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error creating loadout:', error);
+        addMessage(`ERROR: Failed to create loadout - ${error.message}`);
+        return;
+      }
+      
+      if (newLoadout) {
+        console.log('Loadout created successfully:', newLoadout);
+        
+        const base = player.inventory.bases.find(b => b.id === baseId);
+        const motherboard = player.inventory.motherboards.find(m => m.id === motherboardId);
+        
+        const loadout: EquipmentLoadout = {
+          id: newLoadout.id,
+          baseId,
+          motherboardId,
+          installedComponents: {},
+          active: newLoadout.active,
+          stats: {},
+          specialEffects: []
+        };
+        
+        setPlayer(prev => {
+          const updatedPlayer = {
+            ...prev,
+            loadouts: [...prev.loadouts, loadout]
+          };
+          console.log('Updated player loadouts:', updatedPlayer.loadouts);
+          return updatedPlayer;
+        });
+        
+        addMessage(`Created new loadout with ${base?.name} and ${motherboard?.name}`);
+        
+        // Refetch loadouts to ensure we have the latest data
+        await fetchPlayerLoadouts(session.user.id);
+      }
+    } catch (error) {
+      console.error('Error in createLoadout:', error);
+      addMessage(`ERROR: Failed to create loadout - ${(error as Error).message}`);
+    }
+  };
+  
+  const activateLoadout = async (loadoutId: string) => {
+    if (!session?.user?.id) {
+      addMessage('ERROR: Not logged in');
+      return;
+    }
+    
+    // First, set all loadouts to inactive
+    const { error: updateError } = await supabase
+      .from('player_equipment_loadouts')
+      .update({ active: false })
+      .eq('player_id', session.user.id);
+    
+    if (updateError) {
+      addMessage(`ERROR: Failed to update loadouts - ${updateError.message}`);
+      return;
+    }
+    
+    // Then, set the selected loadout to active
+    const { error: activateError } = await supabase
+      .from('player_equipment_loadouts')
+      .update({ active: true })
+      .eq('id', loadoutId)
+      .eq('player_id', session.user.id);
+    
+    if (activateError) {
+      addMessage(`ERROR: Failed to activate loadout - ${activateError.message}`);
+      return;
+    }
+    
+    // Update local state
+    setPlayer(prev => ({
+      ...prev,
+      loadouts: prev.loadouts.map(loadout => ({
+        ...loadout,
+        active: loadout.id === loadoutId
+      }))
+    }));
+    
+    addMessage(`Activated loadout`);
+  };
+  
+  const installComponent = async (loadoutId: string, slot: string, componentId: string) => {
+    if (!session?.user?.id) {
+      addMessage('ERROR: Not logged in');
+      return;
+    }
+    
+    const loadout = player.loadouts.find(l => l.id === loadoutId);
+    if (!loadout) {
+      addMessage('ERROR: Loadout not found');
+      return;
+    }
+    
+    // Get database ID for component
+    const dbComponentId = getDatabaseEquipmentId(componentId, 'component');
+    
+    if (!dbComponentId) {
+      console.error(`Failed to find database ID for component ${componentId}`);
+      addMessage('ERROR: Component not found in database');
+      return;
+    }
+    
+    console.log(`Installing component ${componentId} -> ${dbComponentId} in slot ${slot} of loadout ${loadoutId}`);
+    
+    const updatedComponents = {
+      ...loadout.installedComponents,
+      [slot]: dbComponentId
+    };
+    
+    // Update database
+    const { error } = await supabase
+      .from('player_equipment_loadouts')
+      .update({ installed_components: updatedComponents })
+      .eq('id', loadoutId)
+      .eq('player_id', session.user.id);
+    
+    if (error) {
+      console.error('Error installing component:', error);
+      addMessage(`ERROR: Failed to install component - ${error.message}`);
+      return;
+    }
+    
+    // Update local state
+    const component = player.inventory.components.find(c => c.id === componentId);
+    
+    setPlayer(prev => {
+      const updatedLoadouts = prev.loadouts.map(l => 
+        l.id === loadoutId
+          ? { ...l, installedComponents: {...l.installedComponents, [slot]: componentId} }
+          : l
+      );
+      console.log('Updated loadouts after component install:', updatedLoadouts);
+      return {
+        ...prev,
+        loadouts: updatedLoadouts
+      };
+    });
+    
+    addMessage(`Installed ${component?.name || 'component'} in slot ${slot}`);
+    
+    // Refetch loadouts to ensure data is up to date
+    await fetchPlayerLoadouts(session.user.id);
+  };
+  
+  const uninstallComponent = async (loadoutId: string, slot: string) => {
+    if (!session?.user?.id) {
+      addMessage('ERROR: Not logged in');
+      return;
+    }
+    
+    const loadout = player.loadouts.find(l => l.id === loadoutId);
+    if (!loadout) {
+      addMessage('ERROR: Loadout not found');
+      return;
+    }
+    
+    const componentId = loadout.installedComponents[slot];
+    if (!componentId) {
+      addMessage('ERROR: No component installed in this slot');
+      return;
+    }
+    
+    console.log(`Uninstalling component from slot ${slot} of loadout ${loadoutId}`);
+    
+    const updatedComponents = { ...loadout.installedComponents };
+    delete updatedComponents[slot];
+    
+    // Update database
+    const { error } = await supabase
+      .from('player_equipment_loadouts')
+      .update({ installed_components: updatedComponents })
+      .eq('id', loadoutId)
+      .eq('player_id', session.user.id);
+    
+    if (error) {
+      console.error('Error uninstalling component:', error);
+      addMessage(`ERROR: Failed to uninstall component - ${error.message}`);
+      return;
+    }
+    
+    // Update local state
+    setPlayer(prev => {
+      const updatedLoadouts = prev.loadouts.map(l => {
+        if (l.id === loadoutId) {
+          const newInstalledComponents = { ...l.installedComponents };
+          delete newInstalledComponents[slot];
+          return { ...l, installedComponents: newInstalledComponents };
+        }
+        return l;
+      });
+      console.log('Updated loadouts after component uninstall:', updatedLoadouts);
+      return {
+        ...prev,
+        loadouts: updatedLoadouts
+      };
+    });
+    
+    // Find component name from player's inventory or equipment list
+    const frontendComponent = player.inventory.components.find(c => c.id === componentId) || 
+                             availableEquipment.find(e => e.id === componentId && e.type === 'component');
+    const componentName = frontendComponent?.name || 'Component';
+    
+    addMessage(`Uninstalled ${componentName} from slot ${slot}`);
+    
+    // Refetch loadouts to ensure data is up to date
+    await fetchPlayerLoadouts(session.user.id);
+  };
+  
+  const deleteLoadout = async (loadoutId: string) => {
+    if (!session?.user?.id) {
+      addMessage('ERROR: Not logged in');
+      return;
+    }
+    
+    const loadout = player.loadouts.find(l => l.id === loadoutId);
+    if (!loadout) {
+      addMessage('ERROR: Loadout not found');
+      return;
+    }
+    
+    console.log(`Deleting loadout ${loadoutId}`);
+    
+    // Don't allow deleting the active loadout if it's the only one
+    if (loadout.active && player.loadouts.length === 1) {
+      addMessage('ERROR: Cannot delete the only active loadout');
+      return;
+    }
+    
+    // Delete from database
+    try {
+      const { error } = await supabase
+        .from('player_equipment_loadouts')
+        .delete()
+        .eq('id', loadoutId)
+        .eq('player_id', session.user.id);
+      
+      if (error) {
+        console.error('Error deleting loadout:', error);
+        addMessage(`ERROR: Failed to delete loadout - ${error.message}`);
+        return;
+      }
+      
+      // If this was the active loadout, make another one active
+      if (loadout.active && player.loadouts.length > 1) {
+        const nextLoadoutId = player.loadouts.find(l => l.id !== loadoutId)?.id;
+        if (nextLoadoutId) {
+          await activateLoadout(nextLoadoutId);
+        }
+      }
+      
+      // Update local state
+      setPlayer(prev => {
+        const updatedLoadouts = prev.loadouts.filter(l => l.id !== loadoutId);
+        console.log('Updated loadouts after deletion:', updatedLoadouts);
+        return {
+          ...prev,
+          loadouts: updatedLoadouts
+        };
+      });
+      
+      addMessage('Loadout deleted');
+      
+      // Refetch loadouts to ensure clean state
+      await fetchPlayerLoadouts(session.user.id);
+    } catch (error) {
+      console.error('Error in deleteLoadout:', error);
+      addMessage(`ERROR: Failed to delete loadout - ${(error as Error).message}`);
     }
   };
 
@@ -997,12 +1546,21 @@ function App() {
         onEventReward={(torcoins) => {
           const updatedPlayer = {
             ...player,
-            torcoins: player.torcoins + torcoins
+            torcoins: player.torcoins + torcoins,
+            credits: player.credits + 18000 // Add medium contract reward
           };
           setPlayer(updatedPlayer);
-          syncPlayerData({ torcoins: updatedPlayer.torcoins });
-          addMessage(`[REWARD] Received ${torcoins} Torcoins!`);
+          syncPlayerData({ 
+            torcoins: updatedPlayer.torcoins,
+            credits: updatedPlayer.credits
+          });
+          addMessage(`[REWARD] Received ${18000} credits${torcoins > 0 ? ` and ${torcoins} Torcoins!` : '!'}`);
         }}
+        onCreateLoadout={createLoadout}
+        onEquipLoadout={activateLoadout}
+        onInstallComponent={installComponent}
+        onUninstallComponent={uninstallComponent}
+        onDeleteLoadout={deleteLoadout}
       /></div>}
     </div>
   );

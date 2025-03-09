@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Store, Brain, AlertCircle, Trophy } from 'lucide-react';
+import { Store, Brain, AlertCircle, Trophy, Key } from 'lucide-react';
 import { Panel } from './Panel';
 import { EquipmentShop } from './EquipmentShop';
 import { SkillTree } from './SkillTree';
 import { Leaderboard } from './Leaderboard';
 import { EventPanel } from './EventPanel';
+import CrackingGames from './CrackingGames';
 import { playSound } from '../lib/sounds';
 import type { Equipment, Player } from '../types';
 
@@ -22,6 +23,11 @@ interface ToolbarProps {
   player: Player;
   onUpgradeSkill: (skill: keyof Player['skills']) => void;
   onEventReward: (torcoins: number) => void;
+  onCreateLoadout: (baseId: string, motherboardId: string) => void;
+  onEquipLoadout: (loadoutId: string) => void;
+  onInstallComponent: (loadoutId: string, slot: string, componentId: string) => void;
+  onUninstallComponent: (loadoutId: string, slot: string) => void;
+  onDeleteLoadout: (loadoutId: string) => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -38,6 +44,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   player,
   onUpgradeSkill,
   onEventReward,
+  onCreateLoadout,
+  onEquipLoadout,
+  onInstallComponent,
+  onUninstallComponent,
+  onDeleteLoadout,
 }) => {  
   const togglePanel = (panelId: string) => {
     playSound('click');
@@ -88,6 +99,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <span className="font-mono">Events</span>
           </button>
           <button
+            onClick={() => togglePanel('cracking')}
+            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded border-2 whitespace-nowrap text-sm sm:text-base ${
+              activePanel === 'cracking' 
+                ? 'bg-green-900/30 border-green-400' 
+                : 'border-green-900/50 hover:border-green-400'
+            }`}
+          >
+            <Key className="w-5 h-5" />
+            <span className="font-mono">Cracking</span>
+          </button>
+          <button
             onClick={() => togglePanel('leaderboard')}
             className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded border-2 whitespace-nowrap text-sm sm:text-base ${
               activePanel === 'leaderboard' 
@@ -106,11 +128,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               <EquipmentShop
                 equipment={equipment}
                 onPurchase={onPurchase}
-                onEquip={onEquip}
-                onUnequip={onUnequip}
+                onEquipLoadout={onEquipLoadout}
+                onCreateLoadout={onCreateLoadout}
+                onInstallComponent={onInstallComponent}
+                onUninstallComponent={onUninstallComponent}
+                onDeleteLoadout={onDeleteLoadout}
                 playerCredits={playerCredits}
                 playerTorcoins={playerTorcoins}
-                playerEquipment={player.equipment}
+                player={player}
               />
             )}
             {activePanel === 'skills' && (
@@ -130,6 +155,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
             {activePanel === 'leaderboard' && (
               <Leaderboard />
+            )}
+            {activePanel === 'cracking' && (
+              <CrackingGames onReward={onEventReward} />
             )}
           </div>
         )}

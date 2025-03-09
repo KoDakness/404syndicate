@@ -1,6 +1,6 @@
 import React from 'react';
 import { Player } from '../types';
-import { Wallet, Shield, Ghost, Award, Bitcoin, Lock, Brain, Cpu, User, LogOut, Mail } from 'lucide-react';
+import { Wallet, Shield, Ghost, Award, Bitcoin, Brain, Cpu, User, LogOut, Mail, Server } from 'lucide-react';
 
 interface PlayerStatsProps {
   player: Player;
@@ -8,6 +8,9 @@ interface PlayerStatsProps {
 }
 
 const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onLogout }) => {
+  // Find the active loadout if any
+  const activeLoadout = player.loadouts.find(loadout => loadout.active);
+  
   return (
     <div className="bg-black/50 border-2 sm:border-4 border-green-900/50 rounded-lg p-3 sm:p-4 backdrop-blur-sm shadow-xl shadow-green-900/30">
       <div className="flex flex-col gap-3">
@@ -79,15 +82,15 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onLogout }) => {
           </div>
         </div>
       </div>
-      {player.equipment && player.equipment.equipped && player.equipment.equipped.length > 0 && (
+      
+      {activeLoadout && (
         <div className="mt-4">
-          <div className="text-sm text-green-600 font-mono mb-2">Installed Equipment</div>
-          <div className="flex flex-wrap gap-2">
-            {player.equipment.equipped.map((eq) => (
-              <div key={eq.id} className="bg-black/50 border-2 border-green-900/50 rounded px-2 py-1 text-xs font-mono">
-                {eq.name}
-              </div>
-            ))}
+          <div className="text-sm text-green-600 font-mono mb-2">Active Loadout</div>
+          <div className="flex items-center gap-2">
+            <Server className="w-4 h-4 text-purple-400" />
+            <span className="text-green-400 font-mono text-xs">
+              {player.loadouts.length > 0 ? `${activeLoadout ? 'Active Rig Ready' : 'No Active Loadout'}` : 'No Loadouts Available'}
+            </span>
           </div>
         </div>
       )}

@@ -23,20 +23,46 @@ export interface Job {
 export interface Equipment {
   id: string;
   name: string;
+  type: 'base' | 'motherboard' | 'component';
+  componentType?: 'cpu' | 'ram' | 'storage' | 'gpu';
   rarity: 'common' | 'rare' | 'legendary';
-  type: 'processor' | 'memory' | 'security' | 'software';
   level: number;
   cost: number;
   torcoinCost?: number;
-  effects: {
-    concurrent_jobs?: number;
-    job_speed?: number;
-    skill_boost?: {
-      decryption?: number;
-      firewall?: number;
-      spoofing?: number;
-    };
+  stats: {
+    processing?: number;
+    memory?: number;
+    storage?: number;
+    graphics?: number;
+    stealth?: number;
+    security?: number;
+    stability?: number;
+    cooling?: number;
   };
+  specialEffects: {
+    name: string;
+    description: string;
+    effect: string;
+    cooldown?: number;
+    uses?: number;
+    chance?: number;
+  }[];
+  slotCount?: number;
+  installedComponents?: {
+    [slot: string]: string; // component ID
+  };
+}
+
+export interface EquipmentLoadout {
+  id: string;
+  baseId: string;
+  motherboardId: string;
+  installedComponents: {
+    [slot: string]: string;
+  };
+  active: boolean;
+  stats: Equipment['stats'];
+  specialEffects: Equipment['specialEffects'];
 }
 
 export interface BlackMarketItem {
@@ -69,6 +95,7 @@ export interface RandomEvent {
     attempts: number;
     maxAttempts: number;
     timeLimit: number;
+    torcoinChance: number;
   };
   duration: number;
   effects: {
@@ -96,12 +123,13 @@ export interface Player {
     corporate: number;
     underground: number;
   };
-  equipment: {
-    equipped: Equipment[];
-    inventory: Equipment[];
+  inventory: {
+    bases?: Equipment[];
+    motherboards?: Equipment[];
+    components?: Equipment[];
   };
-  inventory: BlackMarketItem[];
-  activeEvents: RandomEvent[];
+  loadouts: EquipmentLoadout[];
+  activeLoadout?: string;
   level: number;
   experience: number;
   maxConcurrentJobs: number;
