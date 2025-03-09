@@ -54,7 +54,22 @@ export const JobCard: React.FC<JobCardProps> = ({ job, onAccept, disabled }) => 
         </div>
         <div className="flex items-center gap-2">
           {job.status === 'in-progress' && (
-            <div className="text-xs font-mono text-yellow-400">{job?.progress || 0}%</div>
+            <div className="flex items-center gap-2">
+              <div className="relative w-24 h-2 bg-black/50 rounded overflow-hidden border border-green-900">
+                <div 
+                  className="absolute inset-y-0 left-0 bg-yellow-400 transition-all duration-100"
+                  style={{ width: `${job?.progress || 0}%` }}
+                />
+              </div>
+              <span className="text-base font-mono text-yellow-400 font-bold min-w-[3ch]">
+                {job?.progress || 0}%
+              </span>
+              <div className="text-sm font-mono text-green-600">
+                {job?.startTime && (
+                  `${Math.ceil((job.duration - (Date.now() - job.startTime)) / 1000)}s`
+                )}
+              </div>
+            </div>
           )}
           <button
             onClick={() => {

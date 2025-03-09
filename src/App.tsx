@@ -14,10 +14,28 @@ import { supabase } from './lib/supabase';
 import { playSound } from './lib/sounds';
 import type { Job, Player } from './types';
 
+// Helper function to get stored contracts from localStorage
+function getStoredContracts(): Job[] | null {
+  const stored = localStorage.getItem('current_contracts');
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    return null;
+  }
+}
+
 // Helper function to get random contracts
 function getRandomContracts(contracts: Job[], count: number): Job[] {
   const shuffled = [...contracts].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 8);
+  const selected = shuffled.slice(0, 8).map(job => ({
+    ...job,
+    status: 'available',
+    progress: 0,
+    startTime: null
+  }));
+  localStorage.setItem('current_contracts', JSON.stringify(selected));
+  return selected;
 }
 
 const initialPlayer: Player = {
@@ -49,7 +67,10 @@ const initialPlayer: Player = {
 function App() {
   const [session, setSession] = useState(null);
   const [player, setPlayer] = useState<Player>(initialPlayer);
-  const [jobs, setJobs] = useState<Job[]>(getRandomContracts(availableJobs, 8));
+  const [jobs, setJobs] = useState<Job[]>(() => {
+    const stored = getStoredContracts();
+    return stored || getRandomContracts(availableJobs, 8);
+  });
   const [showAdmin, setShowAdmin] = useState(false);
   const [timeMultiplier, setTimeMultiplier] = useState(1);
   const [nextRefresh, setNextRefresh] = useState<Date>(new Date(Date.now() + 2 * 60 * 60 * 1000));
@@ -64,14 +85,16 @@ function App() {
     'Connecting to network...',
     'Ready for operations.',
   ]);
+  const [lastProgressUpdate, setLastProgressUpdate] = useState<{[key: string]: number}>({});
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.clear(); // Clear any stored tokens
+    const newJobs = getRandomContracts(availableJobs, 8);
     playSound('click');
     setSession(null);
     setPlayer(initialPlayer);
-    setJobs(getRandomContracts(availableJobs, 8));
+    setJobs(newJobs);
     addMessage('Logged out successfully. Connection terminated.');
   };
 
@@ -89,10 +112,43 @@ function App() {
   const handleLogin = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setSession(session);
+    
     if (session) {
       addMessage('Establishing secure connection...');
       
-      setJobs(getRandomContracts(availableJobs, 8));
+      // Fetch active jobs from database
+      const { data: activeJobsData, error: activeJobsError } = await supabase
+        .from('player_jobs')
+        .select('*')
+        .eq('player_id', session.user.id)
+        .eq('status', 'in-progress');
+      
+      if (activeJobsError) {
+        addMessage(`ERROR: Failed to fetch active jobs - ${activeJobsError.message}`);
+      }
+
+      // Get stored contracts or generate new ones
+      const storedContracts = getStoredContracts();
+      const baseContracts = storedContracts || getRandomContracts(availableJobs, 8);
+      
+      const activeJobs = activeJobsData?.map(jobData => {
+        const baseJob = availableJobs.find(j => j.id === jobData.job_id);
+        if (!baseJob) return null;
+        return {
+          ...baseJob,
+          status: 'in-progress' as const,
+          progress: jobData.progress,
+          startTime: new Date(jobData.start_time || Date.now()).getTime()
+        };
+      }).filter(Boolean) || [];
+      
+      // Merge active jobs with base contracts
+      const mergedJobs = baseContracts.map(job => {
+        const activeJob = activeJobs?.find(aj => aj?.id === job.id);
+        return activeJob || job;
+      });
+      
+      setJobs(mergedJobs);
       
       // Fetch player data
       const { data: playerData, error } = await supabase
@@ -105,19 +161,29 @@ function App() {
         // Create new player profile if one doesn't exist
         const now = new Date();
         const nextRefreshTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+        const defaultValues = {
+          credits: 1000,
+          torcoins: 0,
+          level: 1,
+          experience: 0,
+          max_concurrent_jobs: 2
+        };
+        const defaultSkills = {
+          decryption: 1,
+          firewall: 1,
+          spoofing: 1,
+          social: 1,
+          skillPoints: 3
+        };
         
         const { data: newPlayer, error: createError } = await supabase
           .from('players')
           .insert([{
             id: session.user.id,
             username: session.user.email?.split('@')[0] || 'hacker',
-            credits: initialPlayer.credits,
-            torcoins: initialPlayer.torcoins,
-            level: initialPlayer.level,
-            experience: initialPlayer.experience,
-            max_concurrent_jobs: initialPlayer.maxConcurrentJobs,
+            ...defaultValues,
             reputation: initialPlayer.reputation,
-            skills: initialPlayer.skills,
+            skills: defaultSkills,
             equipment: initialPlayer.equipment,
             inventory: initialPlayer.inventory,
             last_contract_refresh: now.toISOString(),
@@ -136,8 +202,15 @@ function App() {
           setPlayer({
             ...initialPlayer,
             ...newPlayer,
+            credits: parseInt(newPlayer.credits) || defaultValues.credits,
+            torcoins: parseInt(newPlayer.torcoins) || defaultValues.torcoins,
+            level: parseInt(newPlayer.level) || defaultValues.level,
+            experience: parseInt(newPlayer.experience) || defaultValues.experience,
+            maxConcurrentJobs: parseInt(newPlayer.max_concurrent_jobs) || defaultValues.max_concurrent_jobs,
+            skills: typeof newPlayer.skills === 'string' 
+              ? JSON.parse(newPlayer.skills)
+              : defaultSkills,
             equipment: newPlayer.equipment || initialPlayer.equipment,
-            skills: newPlayer.skills || initialPlayer.skills,
             reputation: newPlayer.reputation || initialPlayer.reputation,
             inventory: newPlayer.inventory || initialPlayer.inventory
           });
@@ -150,8 +223,21 @@ function App() {
         setPlayer({
           ...initialPlayer,
           ...playerData,
+          credits: parseInt(playerData.credits) || initialPlayer.credits,
+          torcoins: parseInt(playerData.torcoins) || initialPlayer.torcoins,
+          level: parseInt(playerData.level) || initialPlayer.level,
+          experience: parseInt(playerData.experience) || initialPlayer.experience,
+          maxConcurrentJobs: parseInt(playerData.max_concurrent_jobs) || initialPlayer.maxConcurrentJobs,
+          skills: typeof playerData.skills === 'string'
+            ? JSON.parse(playerData.skills)
+            : {
+                decryption: 1,
+                firewall: 1,
+                spoofing: 1,
+                social: 1,
+                skillPoints: 3
+              },
           equipment: playerData.equipment || initialPlayer.equipment,
-          skills: playerData.skills || initialPlayer.skills,
           reputation: playerData.reputation || initialPlayer.reputation,
           inventory: playerData.inventory || initialPlayer.inventory
         });
@@ -361,11 +447,8 @@ function App() {
   };
 
   const refreshContracts = () => {
-    const newJobs = getRandomContracts(availableJobs, 8).map(job => ({
-      ...job,
-      status: 'available',
-      progress: 0
-    }));
+    const newJobs = getRandomContracts(availableJobs, 8);
+    localStorage.setItem('current_contracts', JSON.stringify(newJobs));
     setJobs(newJobs);
     addMessage('Admin: Contracts refreshed');
   };
@@ -489,6 +572,11 @@ function App() {
   }, [adminKeyPressed]);
 
   const acceptJob = (job: Job) => {
+    if (!session?.user?.id) {
+      addMessage('ERROR: Not logged in');
+      return;
+    }
+    
     // Count only in-progress jobs
     const activeJobCount = jobs.filter(j => 
       j.status === 'in-progress' && 
@@ -499,14 +587,34 @@ function App() {
       addMessage('ERROR: Maximum concurrent jobs reached');
       return;
     }
+    
+    const startTime = Date.now();
 
     // Initial job message
     addMessage(`\n[CONTRACT START] ${job.name}`);
     addMessage(job.messages[0]);
 
+    // Save job to database
+    supabase
+      .from('player_jobs')
+      .upsert([{
+        player_id: session?.user?.id,
+        job_id: job.id,
+        status: 'in-progress',
+        progress: 0,
+        start_time: new Date(startTime).toISOString()
+      }], {
+        onConflict: 'job_id,player_id'
+      })
+      .then(({ error }) => {
+        if (error) {
+          addMessage(`ERROR: Failed to save job progress - ${error.message}`);
+        }
+      });
+
     const updatedJobs = jobs.map(j => 
       j.id === job.id 
-        ? { ...j, status: 'in-progress' as const, startTime: Date.now() }
+        ? { ...j, status: 'in-progress' as const, startTime }
         : j
     );
 
@@ -522,13 +630,15 @@ function App() {
   useEffect(() => {
     const interval = setInterval(() => {
       setJobs(prevJobs => {
+        if (!session?.user?.id || !prevJobs) return prevJobs;
+        
         let jobsCompleted = false;
         
         const updatedJobs = prevJobs.map(job => {
           if (job.status !== 'in-progress' || !job.startTime) return job;
 
           const elapsed = Date.now() - job.startTime;
-          const newProgress = Math.min(100, Math.floor((elapsed * timeMultiplier / job.duration) * 100));
+          const newProgress = Math.min(100, Math.round((elapsed * timeMultiplier / job.duration) * 100));
           
           // Show messages more frequently
           if (newProgress !== job.progress) {
@@ -548,6 +658,22 @@ function App() {
             jobsCompleted = true;
             addMessage(`\n[${job.name}] ${job.messages[job.messages.length - 1]}`);
             addMessage(`\n[CONTRACT COMPLETE] Reward: ${job.reward} credits\n`);
+            
+            // Update job status in database
+            supabase
+              .from('player_jobs')
+              .update({ 
+                status: 'completed',
+                progress: 100,
+                completed_at: new Date().toISOString()
+              })
+              .eq('job_id', job.id)
+              .eq('player_id', session?.user?.id)
+              .then(({ error }) => {
+                if (error) {
+                  addMessage(`ERROR: Failed to update job status - ${error.message}`);
+                }
+              });
             
             // Handle Torcoin rewards
             const torcoinChance = Math.random();
@@ -596,6 +722,36 @@ function App() {
             });
 
             return { ...job, status: 'completed', progress: 100 };
+          }
+
+          // Update progress in database
+          const lastUpdate = lastProgressUpdate[job.id] || 0;
+          const shouldUpdate = newProgress !== job.progress && 
+                             (newProgress === 100 || // Always update on completion
+                              Date.now() - lastUpdate >= 2000); // Throttle to every 2 seconds
+          
+          if (shouldUpdate) {
+            setLastProgressUpdate(prev => ({
+              ...prev,
+              [job.id]: Date.now()
+            }));
+            
+            supabase
+              .from('player_jobs')
+              .upsert({
+                player_id: session.user.id,
+                job_id: job.id,
+                status: 'in-progress',
+                progress: newProgress,
+                start_time: job.startTime ? new Date(job.startTime).toISOString() : new Date().toISOString()
+              }, {
+                onConflict: 'job_id,player_id'
+              })
+              .then(({ error }) => {
+                if (error) {
+                  addMessage(`ERROR: Failed to update job progress - ${error.message}`);
+                }
+              });
           }
 
           return { ...job, progress: newProgress };
@@ -652,10 +808,10 @@ function App() {
 
         return updatedJobs;
       });
-    }, 100);
+    }, 50); // Update more frequently
 
     return () => clearInterval(interval);
-  }, [timeMultiplier]); // Add timeMultiplier to dependencies
+  }, [timeMultiplier, session?.user?.id]); // Add session to dependencies
 
   return (
     <div className="min-h-screen bg-black text-green-400 p-4 sm:p-8 pb-48 overflow-x-hidden relative">
