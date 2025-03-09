@@ -112,17 +112,17 @@ function App() {
   const handleLogin = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setSession(session);
-    
+
     if (session) {
       addMessage('Establishing secure connection...');
-      
+
       // Fetch active jobs from database
       const { data: activeJobsData, error: activeJobsError } = await supabase
         .from('player_jobs')
         .select('*')
         .eq('player_id', session.user.id)
         .eq('status', 'in-progress');
-      
+
       if (activeJobsError) {
         addMessage(`ERROR: Failed to fetch active jobs - ${activeJobsError.message}`);
       }
@@ -156,34 +156,24 @@ function App() {
         .select('*')
         .eq('id', session.user.id)
         .single();
-      
+
       if (error && error.code === 'PGRST116') {
         // Create new player profile if one doesn't exist
         const now = new Date();
         const nextRefreshTime = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-        const defaultValues = {
-          credits: 1000,
-          torcoins: 0,
-          level: 1,
-          experience: 0,
-          max_concurrent_jobs: 2
-        };
-        const defaultSkills = {
-          decryption: 1,
-          firewall: 1,
-          spoofing: 1,
-          social: 1,
-          skillPoints: 3
-        };
-        
+
         const { data: newPlayer, error: createError } = await supabase
           .from('players')
           .insert([{
             id: session.user.id,
             username: session.user.email?.split('@')[0] || 'hacker',
-            ...defaultValues,
+            credits: initialPlayer.credits,
+            torcoins: initialPlayer.torcoins,
+            level: initialPlayer.level,
+            experience: initialPlayer.experience,
+            max_concurrent_jobs: initialPlayer.maxConcurrentJobs,
             reputation: initialPlayer.reputation,
-            skills: defaultSkills,
+            skills: initialPlayer.skills,
             equipment: initialPlayer.equipment,
             inventory: initialPlayer.inventory,
             last_contract_refresh: now.toISOString(),
@@ -201,18 +191,11 @@ function App() {
         if (newPlayer) {
           setPlayer({
             ...initialPlayer,
-            ...newPlayer,
-            credits: parseInt(newPlayer.credits) || defaultValues.credits,
-            torcoins: parseInt(newPlayer.torcoins) || defaultValues.torcoins,
-            level: parseInt(newPlayer.level) || defaultValues.level,
-            experience: parseInt(newPlayer.experience) || defaultValues.experience,
-            maxConcurrentJobs: parseInt(newPlayer.max_concurrent_jobs) || defaultValues.max_concurrent_jobs,
-            skills: typeof newPlayer.skills === 'string' 
-              ? JSON.parse(newPlayer.skills)
-              : defaultSkills,
-            equipment: newPlayer.equipment || initialPlayer.equipment,
-            reputation: newPlayer.reputation || initialPlayer.reputation,
-            inventory: newPlayer.inventory || initialPlayer.inventory
+            id: newPlayer.id,
+            username: newPlayer.username,
+            tutorial_completed: newPlayer.tutorial_completed || false,
+            tutorial_step: newPlayer.tutorial_step || 0,
+            tutorial_seen_features: newPlayer.tutorial_seen_features || []
           });
           addMessage(`Welcome to the Syndicate, ${newPlayer.username}!`);
         }
@@ -222,24 +205,25 @@ function App() {
       } else if (playerData) {
         setPlayer({
           ...initialPlayer,
-          ...playerData,
-          credits: parseInt(playerData.credits) || initialPlayer.credits,
-          torcoins: parseInt(playerData.torcoins) || initialPlayer.torcoins,
-          level: parseInt(playerData.level) || initialPlayer.level,
-          experience: parseInt(playerData.experience) || initialPlayer.experience,
-          maxConcurrentJobs: parseInt(playerData.max_concurrent_jobs) || initialPlayer.maxConcurrentJobs,
+          id: playerData.id,
+          username: playerData.username,
+          credits: parseInt(String(playerData.credits)),
+          torcoins: parseInt(String(playerData.torcoins)),
+          level: parseInt(String(playerData.level)),
+          experience: parseInt(String(playerData.experience)),
+          maxConcurrentJobs: parseInt(String(playerData.max_concurrent_jobs)),
           skills: typeof playerData.skills === 'string'
             ? JSON.parse(playerData.skills)
-            : {
-                decryption: 1,
-                firewall: 1,
-                spoofing: 1,
-                social: 1,
-                skillPoints: 3
-              },
-          equipment: playerData.equipment || initialPlayer.equipment,
-          reputation: playerData.reputation || initialPlayer.reputation,
-          inventory: playerData.inventory || initialPlayer.inventory
+            : playerData.skills,
+          equipment: playerData.equipment,
+          reputation: playerData.reputation,
+          inventory: playerData.inventory,
+          tutorial_completed: playerData.tutorial_completed || false,
+          tutorial_step: playerData.tutorial_step || 0,
+          tutorial_seen_features: playerData.tutorial_seen_features || [],
+          last_contract_refresh: playerData.last_contract_refresh,
+          next_contract_refresh: playerData.next_contract_refresh,
+          manual_refresh_available: playerData.manual_refresh_available
         });
         addMessage(`Welcome back, ${playerData.username}!`);
         
