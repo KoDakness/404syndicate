@@ -638,7 +638,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
             <h4 className="text-xl font-bold font-mono mb-4">
               {gameStatus === 'won' ? 'Mission Accomplished' : 'Mission Failed'}
             </h4>
-            <p className="font-mono">{message}{gameStatus === 'lost' && !lockedUntil && ' System will be locked for 12 hours.'}</p>
+            <p className="font-mono">{message}{gameStatus === 'lost' && !lockedUntil && ' System will be locked for 7 days.'}</p>
             {gameStatus === 'won' && (
               <div className="mt-6 space-y-2 text-left">
                 <div className="text-yellow-400 font-mono">Rewards:</div>

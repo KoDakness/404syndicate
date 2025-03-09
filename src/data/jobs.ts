@@ -5,7 +5,7 @@ export const availableJobs: Job[] = [
     id: 'social_phish_001',
     name: 'Password Reset Phishing Attack',
     description: 'Create a convincing security alert to obtain executive credentials.',
-    duration: 300000, // 5 minutes
+    duration: 375000, // 6.25 minutes (from 5 min)
     reward: 25000,
     type: 'social',
     riskLevel: 'high',
@@ -29,7 +29,7 @@ export const availableJobs: Job[] = [
     id: 'social_malware_001',
     name: 'Bonus Voucher Malware Campaign',
     description: 'Deploy malware through an enticing employee bonus offer.',
-    duration: 240000, // 4 minutes
+    duration: 300000, // 5 minutes (from 4 min)
     reward: 18000,
     type: 'social',
     riskLevel: 'medium',
@@ -53,7 +53,7 @@ export const availableJobs: Job[] = [
     id: 'social_ceo_001',
     name: 'CEO File Transfer Impersonation',
     description: 'Pose as the CEO to obtain confidential corporate files.',
-    duration: 180000, // 3 minutes
+    duration: 225000, // 3.75 minutes (from 3 min)
     reward: 30000,
     type: 'social',
     riskLevel: 'high',
@@ -77,7 +77,7 @@ export const availableJobs: Job[] = [
     id: 'social_update_001',
     name: 'Fake Security Update Attack',
     description: 'Trick IT staff into installing a compromised security patch.',
-    duration: 360000, // 6 minutes
+    duration: 450000, // 7.5 minutes (from 6 min)
     reward: 35000,
     type: 'social',
     riskLevel: 'high',
@@ -101,7 +101,7 @@ export const availableJobs: Job[] = [
     id: 'job1',
     name: 'Corporate Firewall Breach',
     description: 'Bypass Arasaka Corp\'s security system to extract employee records.',
-    duration: 1200000, // 20 minutes
+    duration: 1500000, // 25 minutes (from 20 min)
     reward: 15000,
     type: 'hack',
     riskLevel: 'medium',
@@ -129,7 +129,7 @@ export const availableJobs: Job[] = [
     id: 'job2',
     name: 'Neural Network Infiltration',
     description: 'Access and manipulate a corporate AI training facility.',
-    duration: 3600000, // 1 hour
+    duration: 4500000, // 75 minutes (from 60 min or 1 hour)
     reward: 45000,
     type: 'hack',
     riskLevel: 'high',
@@ -156,7 +156,7 @@ export const availableJobs: Job[] = [
     id: 'job3',
     name: 'Cryptocurrency Heist',
     description: 'Intercept and redirect cryptocurrency transactions.',
-    duration: 3600000, // 1 hour
+    duration: 4500000, // 75 minutes (from 60 min or 1 hour)
     reward: 50000,
     type: 'exploit',
     riskLevel: 'high',
@@ -183,7 +183,7 @@ export const availableJobs: Job[] = [
     id: 'job4',
     name: 'Security Audit',
     description: 'Perform legitimate security testing for a corporation.',
-    duration: 120000, // 2 minutes
+    duration: 150000, // 2.5 minutes (from 2 min)
     reward: 5000,
     type: 'analyze',
     riskLevel: 'low',
@@ -208,7 +208,7 @@ export const availableJobs: Job[] = [
     id: 'job5',
     name: 'Data Recovery',
     description: 'Recover deleted files from a secure server.',
-    duration: 360000, // 6 minutes
+    duration: 450000, // 7.5 minutes (from 6 min)
     reward: 15000,
     type: 'decrypt',
     riskLevel: 'medium',
@@ -230,7 +230,7 @@ export const availableJobs: Job[] = [
     id: 'job6',
     name: 'Ghost Protocol',
     description: 'Remove all traces of corporate activity from public networks.',
-    duration: 360000, // 6 minutes
+    duration: 450000, // 7.5 minutes (from 6 min)
     reward: 18000,
     type: 'infiltrate',
     riskLevel: 'medium',
@@ -253,7 +253,7 @@ export const availableJobs: Job[] = [
     id: 'job7',
     name: 'Black Market Access',
     description: 'Gain entry to an exclusive underground trading network.',
-    duration: 1080000, // 18 minutes
+    duration: 1350000, // 22.5 minutes (from 18 min)
     reward: 45000,
     type: 'hack',
     riskLevel: 'high',
@@ -276,7 +276,7 @@ export const availableJobs: Job[] = [
     id: 'job8',
     name: 'Prototype Theft',
     description: 'Steal experimental technology blueprints.',
-    duration: 1080000, // 18 minutes
+    duration: 1350000, // 22.5 minutes (from 18 min)
     reward: 50000,
     type: 'infiltrate',
     riskLevel: 'high',
@@ -299,7 +299,7 @@ export const availableJobs: Job[] = [
     id: 'job9',
     name: 'System Maintenance',
     description: 'Perform routine system updates for a corporate client.',
-    duration: 120000, // 2 minutes
+    duration: 150000, // 2.5 minutes (from 2 min)
     reward: 4500,
     type: 'analyze',
     riskLevel: 'low',
@@ -321,7 +321,7 @@ export const availableJobs: Job[] = [
     id: 'job10',
     name: 'Identity Theft',
     description: 'Create and sell fake digital identities.',
-    duration: 360000, // 6 minutes
+    duration: 450000, // 7.5 minutes (from 6 min)
     reward: 16000,
     type: 'exploit',
     riskLevel: 'medium',
@@ -343,7 +343,7 @@ export const availableJobs: Job[] = [
     id: 'job11',
     name: 'Ransomware Deployment',
     description: 'Deploy ransomware in corporate networks.',
-    duration: 1080000, // 18 minutes
+    duration: 1350000, // 22.5 minutes (from 18 min)
     reward: 48000,
     type: 'exploit',
     riskLevel: 'high',
@@ -366,7 +366,7 @@ export const availableJobs: Job[] = [
     id: 'job12',
     name: 'Corporate Espionage',
     description: 'Steal trade secrets from competing corporations.',
-    duration: 1080000, // 18 minutes
+    duration: 1350000, // 22.5 minutes (from 18 min)
     reward: 42000,
     type: 'infiltrate',
     riskLevel: 'high',
@@ -389,7 +389,7 @@ export const availableJobs: Job[] = [
     id: 'job13',
     name: 'Network Debug',
     description: 'Fix network issues for a legitimate client.',
-    duration: 120000, // 2 minutes
+    duration: 150000, // 2.5 minutes (from 2 min)
     reward: 4800,
     type: 'analyze',
     riskLevel: 'low',
@@ -411,7 +411,7 @@ export const availableJobs: Job[] = [
     id: 'job14',
     name: 'AI Manipulation',
     description: 'Reprogram security AI to ignore specific signatures.',
-    duration: 360000, // 6 minutes
+    duration: 450000, // 7.5 minutes (from 6 min)
     reward: 20000,
     type: 'hack',
     riskLevel: 'medium',
@@ -434,7 +434,7 @@ export const availableJobs: Job[] = [
     id: 'job15',
     name: 'Database Encryption',
     description: 'Encrypt sensitive corporate databases.',
-    duration: 120000, // 2 minutes
+    duration: 150000, // 2.5 minutes (from 2 min)
     reward: 5200,
     type: 'analyze',
     riskLevel: 'low',
@@ -456,7 +456,7 @@ export const availableJobs: Job[] = [
     id: 'social1',
     name: 'Corporate Phishing Campaign',
     description: 'Create a convincing email to trick corporate employees into revealing sensitive data.',
-    duration: 300000, // 5 minutes
+    duration: 375000, // 6.25 minutes (from 5 min)
     reward: 12000,
     type: 'social',
     riskLevel: 'medium',
@@ -480,7 +480,7 @@ export const availableJobs: Job[] = [
     id: 'social2',
     name: 'Executive Impersonation',
     description: 'Pose as a high-ranking executive to request an emergency fund transfer.',
-    duration: 600000, // 10 minutes
+    duration: 750000, // 12.5 minutes (from 10 min)
     reward: 25000,
     type: 'social',
     riskLevel: 'high',
@@ -504,7 +504,7 @@ export const availableJobs: Job[] = [
     id: 'social3',
     name: 'Help Desk Infiltration',
     description: 'Convince IT support to reset credentials for a "locked" account.',
-    duration: 240000, // 4 minutes
+    duration: 300000, // 5 minutes (from 4 min)
     reward: 8000,
     type: 'social',
     riskLevel: 'low',
