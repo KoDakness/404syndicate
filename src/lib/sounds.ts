@@ -1,9 +1,9 @@
 // Sound URLs - using placeholder sounds that are freely available
 const SOUND_URLS = {
-  click: 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3',
-  complete: 'https://assets.mixkit.co/active_storage/sfx/2017/2017-preview.mp3',
-  eventComplete: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
-  torcoin: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'
+  click: '/sounds/click.mp3',
+  complete: '/sounds/complete.mp3',
+  eventComplete: '/sounds/event-complete.mp3',
+  torcoin: '/sounds/torcoin.mp3'
 };
 
 // Cyberpunk-style background music

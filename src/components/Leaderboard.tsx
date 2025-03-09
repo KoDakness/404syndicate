@@ -1,33 +1,81 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Trophy, Bitcoin, Award } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
-// Generate 100 mock hackers
-const mockLeaderboard = Array.from({ length: 100 }, (_, i) => ({
-  id: (i + 1).toString(),
-  name: [
-    'Cyber', 'Data', 'Neon', 'Ghost', 'Shadow', 'Quantum', 'Binary', 'Neural',
-    'Crypto', 'Pixel', 'Vector', 'Zero', 'Matrix', 'Code', 'Net', 'Void'
-  ][Math.floor(Math.random() * 16)] + [
-    'Ninja', 'Hunter', 'Runner', 'Phantom', 'Reaper', 'Wraith', 'Spectre',
-    'Knight', 'Master', 'Blade', 'Smith', 'Walker', 'Stalker', 'Shade', 'Drift'
-  ][Math.floor(Math.random() * 15)],
-  level: Math.floor(Math.random() * 50) + 50, // Level 50-99
-  credits: Math.floor(Math.random() * 2000000) + 500000, // 500k-2.5M credits
-  torcoins: Math.floor(Math.random() * 50) + 1, // 1-50 torcoins
-})).sort((a, b) => {
-  // First sort by torcoins (highest first)
-  if (b.torcoins !== a.torcoins) {
-    return b.torcoins - a.torcoins;
-  }
-  // Then by level if torcoins are equal
-  if (b.level !== a.level) {
-    return b.level - a.level;
-  }
-  // Finally by credits if both torcoins and level are equal
-  return b.credits - a.credits;
-});
+interface LeaderboardPlayer {
+  id: string;
+  username: string;
+  level: number;
+  credits: number;
+  torcoins: number;
+}
 
 export const Leaderboard: React.FC = () => {
+  const [players, setPlayers] = useState<LeaderboardPlayer[]>([]);
+  const [stats, setStats] = useState({
+    totalPlayers: 0,
+    activePlayers: 0,
+    contractsCompleted: 0,
+    totalTorcoins: 0
+  });
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      // Fetch top players sorted by torcoins, level, and credits
+      const { data: leaderboardData, error: leaderboardError } = await supabase
+        .from('players')
+        .select('id, username, level, credits, torcoins')
+        .order('torcoins', { ascending: false })
+        .order('level', { ascending: false })
+        .order('credits', { ascending: false })
+        .limit(100);
+
+      if (leaderboardError) {
+        console.error('Error fetching leaderboard:', leaderboardError);
+        return;
+      }
+
+      setPlayers(leaderboardData || []);
+
+      // Fetch statistics
+      const { count: totalPlayers } = await supabase
+        .from('players')
+        .select('id', { count: 'exact', head: true });
+
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const { count: activePlayers } = await supabase
+        .from('players')
+        .select('id', { count: 'exact', head: true })
+        .gt('updated_at', oneWeekAgo.toISOString());
+
+      const { count: contractsCompleted } = await supabase
+        .from('player_jobs')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'completed');
+
+      const { data: torcoinData } = await supabase
+        .from('players')
+        .select('torcoins');
+
+      const totalTorcoins = torcoinData?.reduce((sum, player) => sum + (player.torcoins || 0), 0) || 0;
+
+      setStats({
+        totalPlayers: totalPlayers || 0,
+        activePlayers: activePlayers || 0,
+        contractsCompleted: contractsCompleted || 0,
+        totalTorcoins
+      });
+    };
+
+    fetchLeaderboard();
+
+    // Refresh leaderboard every 5 minutes
+    const interval = setInterval(fetchLeaderboard, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -37,7 +85,7 @@ export const Leaderboard: React.FC = () => {
             Top Hackers
           </h3>
           <div className="space-y-2 overflow-y-auto flex-1 pr-2 scrollbar-hide">
-            {mockLeaderboard.map((player, index) => (
+            {players.map((player, index) => (
               <div
                 key={player.id}
                 className="bg-black/50 border-2 border-green-900/50 rounded-lg p-3 flex items-center justify-between hover:bg-green-900/10 transition-colors"
@@ -47,7 +95,7 @@ export const Leaderboard: React.FC = () => {
                     {index + 1}
                   </span>
                   <div>
-                    <div className="font-mono text-green-400">{player.name}</div>
+                    <div className="font-mono text-green-400">{player.username}</div>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-sm text-yellow-400 font-mono flex items-center gap-1">
                         <Bitcoin className="w-3 h-3" /> {player.torcoins}
@@ -72,19 +120,19 @@ export const Leaderboard: React.FC = () => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-green-600 font-mono">Total Players</span>
-                <span className="text-green-400 font-mono">1,337</span>
+                <span className="text-green-400 font-mono">{stats.totalPlayers.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-green-600 font-mono">Active Hackers</span>
-                <span className="text-green-400 font-mono">421</span>
+                <span className="text-green-400 font-mono">{stats.activePlayers.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-green-600 font-mono">Contracts Completed</span>
-                <span className="text-green-400 font-mono">13,370</span>
+                <span className="text-green-400 font-mono">{stats.contractsCompleted.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-green-600 font-mono">Total Torcoins</span>
-                <span className="text-yellow-400 font-mono">892</span>
+                <span className="text-yellow-400 font-mono">{stats.totalTorcoins.toLocaleString()}</span>
               </div>
             </div>
           </div>
