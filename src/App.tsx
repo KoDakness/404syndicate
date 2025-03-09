@@ -79,7 +79,7 @@ function App() {
   const [eventKey, setEventKey] = useState(0);
   const [adminKeyPressed, setAdminKeyPressed] = useState(false);
   const [activePanel, setActivePanel] = useState<string | null>(null);
-  const [showTutorial, setShowTutorial] = useState(false);
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [messages, setMessages] = useState<string[]>([
     'Initializing system...',
     'Connecting to network...',
@@ -856,7 +856,7 @@ function App() {
               </div>
             </div>
             
-            {(!player.tutorial_completed || showTutorial) && (
+            {(!player.tutorial_completed && player.tutorial_step === 0) && (
               <Tutorial
                 player={player}
                 onComplete={() => setShowTutorial(false)}
