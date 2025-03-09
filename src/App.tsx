@@ -86,8 +86,21 @@ function App() {
     'Ready for operations.',
   ]);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<{[key: string]: number}>({});
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   const handleLogout = async () => {
+    // Save stats before logout
+    await syncPlayerData({
+      credits: player.credits,
+      torcoins: player.torcoins,
+      level: player.level,
+      experience: player.experience,
+      reputation: player.reputation,
+      skills: player.skills,
+      equipment: player.equipment,
+      inventory: player.inventory
+    });
+    
     await supabase.auth.signOut();
     localStorage.clear(); // Clear any stored tokens
     const newJobs = getRandomContracts(availableJobs, 8);
@@ -267,6 +280,58 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Save stats when tab closes or user navigates away
+  useEffect(() => {
+    const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
+      if (session?.user?.id && unsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        
+        await syncPlayerData({
+          credits: player.credits,
+          torcoins: player.torcoins,
+          level: player.level,
+          experience: player.experience,
+          reputation: player.reputation,
+          skills: player.skills,
+          equipment: player.equipment,
+          inventory: player.inventory
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [session, player, unsavedChanges]);
+
+  // Mark changes as unsaved when player stats update
+  useEffect(() => {
+    setUnsavedChanges(true);
+  }, [player.credits, player.torcoins, player.level, player.experience]);
+
+  // Auto-save every 5 minutes if there are unsaved changes
+  useEffect(() => {
+    if (!session?.user?.id || !unsavedChanges) return;
+
+    const autoSaveInterval = setInterval(async () => {
+      if (unsavedChanges) {
+        await syncPlayerData({
+          credits: player.credits,
+          torcoins: player.torcoins,
+          level: player.level,
+          experience: player.experience,
+          reputation: player.reputation,
+          skills: player.skills,
+          equipment: player.equipment,
+          inventory: player.inventory
+        });
+        setUnsavedChanges(false);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(autoSaveInterval);
+  }, [session, player, unsavedChanges]);
+
   const upgradeSkill = (skill: keyof Player['skills']) => {
     if (player.skills.skillPoints <= 0) return;
     
@@ -317,6 +382,7 @@ function App() {
       addMessage(`ERROR: Failed to sync player data - ${error.message}`);
       return false;
     }
+    setUnsavedChanges(false);
     return true;
   };
 
