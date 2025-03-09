@@ -7,19 +7,19 @@ const baseEquipment: Equipment[] = [
     name: 'Black Ice MK-1',
     description: 'Custom-built cyberdeck optimized for deep web infiltration',
     type: 'base',
-    rarity: 'rare',
+    rarity: 'common',
     level: 2,
     cost: 75000,
     stats: {
-      processing: 15,
-      stealth: 20,
-      security: 10
+      decryption: 2,
+      firewall: 1,
+      spoofing: 3
     },
     specialEffects: [
       {
-        name: 'Deep Web Mastery',
-        description: 'Increases success rate of darknet operations',
-        effect: 'darknet_boost'
+        name: 'Credit Booster',
+        description: '5% more credits earned on contract completion',
+        effect: 'credit_boost'
       }
     ]
   },
@@ -32,15 +32,15 @@ const baseEquipment: Equipment[] = [
     level: 2,
     cost: 85000,
     stats: {
-      stealth: 25,
-      security: 15,
-      stability: 10
+      spoofing: 3,
+      firewall: 2,
+      social: 1
     },
     specialEffects: [
       {
-        name: 'Ghost Protocol',
-        description: 'Reduces trace detection chance',
-        effect: 'stealth_boost'
+        name: 'Credit Booster',
+        description: '10% more credits earned on contract completion',
+        effect: 'credit_boost'
       }
     ]
   },
@@ -49,19 +49,19 @@ const baseEquipment: Equipment[] = [
     name: 'Titanium Node',
     description: 'High-security workstation resistant to tracebacks',
     type: 'base',
-    rarity: 'rare',
+    rarity: 'legendary',
     level: 2,
     cost: 95000,
     stats: {
-      security: 25,
-      stability: 20,
-      processing: 10
+      firewall: 3,
+      decryption: 2,
+      social: 1
     },
     specialEffects: [
       {
-        name: 'Fortress Protocol',
-        description: 'Enhanced protection against counter-hacks',
-        effect: 'defense_boost'
+        name: 'Credit Booster',
+        description: '15% more credits earned on contract completion',
+        effect: 'credit_boost'
       }
     ]
   }
@@ -72,22 +72,22 @@ const motherboards: Equipment[] = [
   {
     id: 'mb_neural_nexus_x',
     name: 'Neural Nexus X',
-    description: 'Increases overall hacking efficiency by 10%',
+    description: 'Increases overall hacking efficiency',
     type: 'motherboard',
     rarity: 'rare',
     level: 2,
     cost: 120000,
     slotCount: 4,
     stats: {
-      processing: 10,
-      memory: 10,
-      stability: 10
+      decryption: 2,
+      spoofing: 2,
+      firewall: 2
     },
     specialEffects: [
       {
-        name: 'Efficiency Boost',
-        description: 'All operations complete 10% faster',
-        effect: 'speed_boost'
+        name: 'Experience Boost',
+        description: '10% XP boost from completed contracts',
+        effect: 'exp_boost'
       }
     ]
   },
@@ -101,15 +101,15 @@ const motherboards: Equipment[] = [
     cost: 150000,
     slotCount: 4,
     stats: {
-      security: 15,
-      stealth: 15,
-      stability: 10
+      firewall: 3,
+      spoofing: 2,
+      social: 1
     },
     specialEffects: [
       {
-        name: 'Quantum Shield',
-        description: 'Failed hacks have 50% less chance of triggering alarms',
-        effect: 'failure_protection'
+        name: 'Contract Multitasker',
+        description: '+1 to maximum concurrent contracts',
+        effect: 'max_contracts_boost'
       }
     ]
   },
@@ -123,15 +123,39 @@ const motherboards: Equipment[] = [
     cost: 135000,
     slotCount: 4,
     stats: {
-      processing: 12,
-      memory: 15,
-      stealth: 13
+      social: 3,
+      decryption: 2,
+      spoofing: 1
     },
     specialEffects: [
       {
-        name: 'Deception Master',
-        description: 'Social engineering attacks are 25% more effective',
-        effect: 'social_boost'
+        name: 'Hard Contract Hunter',
+        description: 'Double chance at hard contracts on refresh',
+        effect: 'hard_contract_boost'
+      }
+    ]
+  },
+  {
+    id: 'mb_wraith_matrix',
+    name: 'Wraith Matrix',
+    description: 'Ultra-rare experimental motherboard with quantum entanglement computing',
+    type: 'motherboard',
+    rarity: 'legendary',
+    level: 3,
+    cost: 10000000,
+    torcoinCost: 5,
+    slotCount: 6,
+    stats: {
+      decryption: 5,
+      firewall: 5,
+      social: 5,
+      spoofing: 5
+    },
+    specialEffects: [
+      {
+        name: 'Wraith Hunter',
+        description: '1% chance to earn the ultra-rare WraithCoin from completed contracts',
+        effect: 'wraithcoin_chance_boost'
       }
     ]
   }
@@ -150,14 +174,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 45000,
     stats: {
-      processing: 25,
-      stability: -5
+      decryption: 3,
+      firewall: -1
     },
     specialEffects: [
       {
-        name: 'Brute Force Specialist',
-        description: 'Password cracking attempts are 30% faster',
-        effect: 'crack_speed_boost'
+        name: 'Speed Daemon',
+        description: 'Increases contract completion time by 15%',
+        effect: 'completion_time_boost'
       }
     ]
   },
@@ -171,14 +195,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 55000,
     stats: {
-      processing: 20,
-      memory: 15
+      decryption: 2,
+      spoofing: 2
     },
     specialEffects: [
       {
-        name: 'Neural Enhancement',
-        description: 'AI-assisted operations are 40% more effective',
-        effect: 'ai_boost'
+        name: 'Credit Booster',
+        description: '20% more credits earned on contract completion',
+        effect: 'credit_boost'
       }
     ]
   },
@@ -192,15 +216,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 48000,
     stats: {
-      processing: 18,
-      stability: 15,
-      cooling: 20
+      decryption: 2,
+      firewall: 2
     },
     specialEffects: [
       {
-        name: 'Cool Operations',
-        description: 'Eliminates performance penalties from running multiple scripts',
-        effect: 'heat_reduction'
+        name: 'Contract Multitasker',
+        description: '+1 to maximum concurrent contracts',
+        effect: 'max_contracts_boost'
       }
     ]
   },
@@ -214,14 +237,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 52000,
     stats: {
-      processing: 15,
-      stealth: 25
+      decryption: 1,
+      spoofing: 3
     },
     specialEffects: [
       {
-        name: 'Ghost Execution',
-        description: 'Scripts have 35% less chance of being detected',
-        effect: 'stealth_boost'
+        name: 'Torcoin Hunter',
+        description: '5% extra chance to receive a torcoin on completion',
+        effect: 'torcoin_chance_boost'
       }
     ]
   },
@@ -237,14 +260,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 42000,
     stats: {
-      memory: 25,
-      stealth: 15
+      social: 3,
+      spoofing: 1
     },
     specialEffects: [
       {
-        name: 'Multi-Threading',
-        description: 'Can run an additional social engineering script',
-        effect: 'social_multitask'
+        name: 'Experience Boost',
+        description: '10% XP boost from completed contracts',
+        effect: 'exp_boost'
       }
     ]
   },
@@ -258,14 +281,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 46000,
     stats: {
-      memory: 20,
-      processing: 15
+      social: 2,
+      decryption: 2
     },
     specialEffects: [
       {
-        name: 'Enhanced Deception',
-        description: 'Deception attacks have 25% higher success rate',
-        effect: 'deception_boost'
+        name: 'Hard Contract Hunter',
+        description: 'Double chance at hard contracts on refresh',
+        effect: 'hard_contract_boost'
       }
     ]
   },
@@ -279,14 +302,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 44000,
     stats: {
-      memory: 22,
-      processing: 12
+      social: 2,
+      decryption: 2
     },
     specialEffects: [
       {
-        name: 'Keystroke Cache',
-        description: 'Password cracking becomes more effective with each attempt',
-        effect: 'learning_boost'
+        name: 'Credit Booster',
+        description: '20% more credits earned on contract completion',
+        effect: 'credit_boost'
       }
     ]
   },
@@ -300,14 +323,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 48000,
     stats: {
-      memory: 20,
-      processing: 18
+      social: 3,
+      decryption: 1
     },
     specialEffects: [
       {
-        name: 'AI Enhancement',
-        description: 'Phishing attacks are 30% more convincing',
-        effect: 'phishing_boost'
+        name: 'Contract Multitasker',
+        description: '+1 to maximum concurrent contracts',
+        effect: 'max_contracts_boost'
       }
     ]
   },
@@ -323,14 +346,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 38000,
     stats: {
-      storage: 20,
-      stealth: 20
+      firewall: 2,
+      spoofing: 2
     },
     specialEffects: [
       {
-        name: 'Log Elimination',
-        description: 'Automatically erases 75% of operation traces',
-        effect: 'trace_reduction'
+        name: 'Easy Money',
+        description: 'All contracts will be easy and reward 50% credits',
+        effect: 'easy_contracts'
       }
     ]
   },
@@ -344,14 +367,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 42000,
     stats: {
-      storage: 25,
-      security: 15
+      firewall: 3,
+      decryption: 1
     },
     specialEffects: [
       {
-        name: 'Secure Storage',
-        description: 'Stolen data cannot be traced back to you',
-        effect: 'secure_storage'
+        name: 'Torcoin Hunter',
+        description: '5% extra chance to receive a torcoin on completion',
+        effect: 'torcoin_chance_boost'
       }
     ]
   },
@@ -365,14 +388,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 40000,
     stats: {
-      storage: 18,
-      stealth: 22
+      firewall: 2,
+      spoofing: 2
     },
     specialEffects: [
       {
-        name: 'Failed Attempt Purge',
-        description: 'Failed hacks leave no trace',
-        effect: 'failure_cleanup'
+        name: 'Speed Daemon',
+        description: 'Increases contract completion time by 15%',
+        effect: 'completion_time_boost'
       }
     ]
   },
@@ -386,14 +409,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 45000,
     stats: {
-      storage: 30,
-      processing: 10
+      firewall: 3,
+      decryption: 1
     },
     specialEffects: [
       {
-        name: 'Enhanced Extraction',
-        description: 'Steal 50% more data per operation',
-        effect: 'loot_boost'
+        name: 'Credit Booster',
+        description: '20% more credits earned on contract completion',
+        effect: 'credit_boost'
       }
     ]
   },
@@ -409,14 +432,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 58000,
     stats: {
-      graphics: 25,
-      processing: 15
+      social: 3,
+      decryption: 1
     },
     specialEffects: [
       {
-        name: 'Rapid Forgery',
-        description: 'ID generation is 40% faster',
-        effect: 'forge_speed_boost'
+        name: 'Experience Boost',
+        description: '10% XP boost from completed contracts',
+        effect: 'exp_boost'
       }
     ]
   },
@@ -430,14 +453,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 62000,
     stats: {
-      graphics: 20,
-      stealth: 20
+      spoofing: 3,
+      firewall: 1
     },
     specialEffects: [
       {
-        name: 'Visual Masking',
-        description: 'Firewall detection rate reduced by 35%',
-        effect: 'firewall_evasion'
+        name: 'Hard Contract Hunter',
+        description: 'Double chance at hard contracts on refresh',
+        effect: 'hard_contract_boost'
       }
     ]
   },
@@ -451,14 +474,14 @@ const components: Equipment[] = [
     level: 2,
     cost: 65000,
     stats: {
-      graphics: 30,
-      processing: 10
+      social: 3,
+      spoofing: 1
     },
     specialEffects: [
       {
-        name: 'Deepfake Mastery',
-        description: 'Generated deepfakes are 45% more convincing',
-        effect: 'deepfake_boost'
+        name: 'Credit Booster',
+        description: '20% more credits earned on contract completion',
+        effect: 'credit_boost'
       }
     ]
   },
@@ -472,14 +495,37 @@ const components: Equipment[] = [
     level: 2,
     cost: 68000,
     stats: {
-      graphics: 25,
-      processing: 15
+      social: 2,
+      spoofing: 2
     },
     specialEffects: [
       {
-        name: 'Perfect Mimicry',
-        description: 'Voice and face spoofing is nearly undetectable',
-        effect: 'spoof_master'
+        name: 'Easy Money',
+        description: 'All contracts will be easy and reward 50% credits',
+        effect: 'easy_contracts'
+      }
+    ]
+  },
+  {
+    id: 'gpu_wraith_processor',
+    name: 'Wraith Processor',
+    description: 'Ultra-rare quantum computing chip with multidimensional processing',
+    type: 'component',
+    componentType: 'gpu',
+    rarity: 'legendary',
+    level: 3,
+    cost: 10000000,
+    torcoinCost: 5,
+    stats: {
+      social: 4,
+      spoofing: 4,
+      decryption: 4
+    },
+    specialEffects: [
+      {
+        name: 'Wraith Hunter',
+        description: '1% chance to earn the ultra-rare WraithCoin from completed contracts',
+        effect: 'wraithcoin_chance_boost'
       }
     ]
   }
@@ -498,16 +544,15 @@ const legendaryEquipment: Equipment[] = [
     cost: 500000,
     torcoinCost: 25,
     stats: {
-      processing: 50,
-      security: 40,
-      stability: 35
+      decryption: 5,
+      firewall: 4, 
+      spoofing: 3
     },
     specialEffects: [
       {
-        name: 'Instant Breach',
-        description: 'Can instantly complete a brute-force attack once per contract',
-        effect: 'instant_breach',
-        cooldown: 3600000 // 1 hour
+        name: 'Ultimate Boost',
+        description: 'Combines Speed Daemon, Credit Booster and Torcoin Hunter effects',
+        effect: 'multi_boost'
       }
     ]
   },
@@ -521,14 +566,14 @@ const legendaryEquipment: Equipment[] = [
     cost: 450000,
     torcoinCost: 20,
     stats: {
-      processing: 45,
-      memory: 40,
-      stability: -20
+      decryption: 4,
+      social: 4,
+      firewall: -2
     },
     specialEffects: [
       {
-        name: 'Parallel Processing',
-        description: 'Run two contracts simultaneously with 50% increased trace risk',
+        name: 'Contract Master',
+        description: '+2 to maximum concurrent contracts',
         effect: 'dual_contract'
       }
     ]
@@ -543,15 +588,15 @@ const legendaryEquipment: Equipment[] = [
     cost: 550000,
     torcoinCost: 30,
     stats: {
-      processing: 40,
-      security: 45,
-      stealth: 35
+      firewall: 4,
+      spoofing: 4,
+      social: 4
     },
     specialEffects: [
       {
-        name: 'Botnet Control',
-        description: 'Can hijack and control botnets for DDoS attacks',
-        effect: 'botnet_master'
+        name: 'Master of All',
+        description: 'Combines Experience Boost, Credit Booster and Hard Contract Hunter',
+        effect: 'master_of_all'
       }
     ]
   },
@@ -568,15 +613,15 @@ const legendaryEquipment: Equipment[] = [
     torcoinCost: 20,
     slotCount: 6,
     stats: {
-      processing: 35,
-      memory: 30,
-      stability: 25
+      decryption: 5,
+      social: 3,
+      firewall: 2
     },
     specialEffects: [
       {
-        name: 'Dual CPU Support',
-        description: 'Can install and utilize two CPU components',
-        effect: 'dual_cpu'
+        name: 'Ultimate Booster',
+        description: '30% more credits earned and 20% XP boost',
+        effect: 'dual_boost'
       }
     ]
   },
@@ -591,15 +636,15 @@ const legendaryEquipment: Equipment[] = [
     torcoinCost: 18,
     slotCount: 5,
     stats: {
-      stealth: 40,
-      security: 35,
-      stability: 25
+      spoofing: 5,
+      firewall: 3,
+      social: 2
     },
     specialEffects: [
       {
-        name: 'Failure Shield',
-        description: 'Prevents one failed hack from triggering alerts per contract',
-        effect: 'failure_protection'
+        name: 'Torcoin Master',
+        description: '10% chance to receive a torcoin on completion',
+        effect: 'advanced_torcoin_boost'
       }
     ]
   },
@@ -614,15 +659,15 @@ const legendaryEquipment: Equipment[] = [
     torcoinCost: 22,
     slotCount: 5,
     stats: {
-      processing: 45,
-      memory: 35,
-      stability: 20
+      decryption: 6,
+      social: 3,
+      firewall: 1
     },
     specialEffects: [
       {
-        name: 'Quantum Breakthrough',
-        description: 'Reduces encryption cracking time by 75%',
-        effect: 'quantum_crack'
+        name: 'Contract Accelerator',
+        description: 'Increases contract completion time by 25%',
+        effect: 'advanced_completion_boost'
       }
     ]
   }

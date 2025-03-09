@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Equipment, Player } from '../types';
-import { Cpu, Shield, Brain, Code, Bitcoin, HardDrive, Cpu as Gpu, Clapperboard as Motherboard, Server, Store, Package, Boxes, LayoutList } from 'lucide-react';
+import { Cpu, Shield, Brain, Code, Bitcoin, HardDrive, Cpu as Gpu, Clapperboard as Motherboard, Server, Store, Package, Boxes, LayoutList, Skull } from 'lucide-react';
 import { LoadoutManager } from './LoadoutManager';
 
 interface EquipmentShopProps {
@@ -116,6 +116,47 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
     }
   };
 
+  const getStatColor = (value: number) => {
+    if (value > 0) return 'text-green-400';
+    if (value < 0) return 'text-red-400';
+    return 'text-yellow-400';
+  };
+
+  const getEffectDescription = (effect: string) => {
+    switch (effect) {
+      case 'completion_time_boost':
+        return 'Completes contracts 15% faster';
+      case 'max_contracts_boost':
+        return 'Allows running 1 additional contract at a time';
+      case 'credit_boost':
+        return 'Earn 20% more credits from completed contracts';
+      case 'torcoin_chance_boost':
+        return '5% extra chance to earn Torcoins from contracts';
+      case 'exp_boost':
+        return 'Earn 10% more XP from completed contracts';
+      case 'hard_contract_boost':
+        return 'Double chance to get hard (high-paying) contracts when refreshing';
+      case 'easy_contracts':
+        return 'All contracts will be easy difficulty but reward 50% credits';
+      case 'multi_boost':
+        return 'Complete contracts 15% faster, earn 20% more credits, and 5% higher Torcoin chance';
+      case 'dual_contract':
+        return 'Allows running 2 additional contracts at a time';
+      case 'master_of_all':
+        return 'Earn 10% more XP, 20% more credits, double chance for hard contracts';
+      case 'dual_boost':
+        return 'Earn 30% more credits and 20% more XP from contracts';
+      case 'advanced_torcoin_boost':
+        return '10% chance to earn Torcoins from completed contracts';
+      case 'advanced_completion_boost':
+        return 'Completes contracts 25% faster';
+      case 'wraithcoin_chance_boost':
+        return '1% chance to earn the ultra-rare WraithCoin from contracts';
+      default:
+        return 'Unknown effect';
+    }
+  };
+
   const handleCreateLoadout = () => {
     if (selectedBase && selectedMotherboard) {
       onCreateLoadout(selectedBase, selectedMotherboard);
@@ -222,6 +263,9 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
                       {getEquipmentIcon(item.type, item.componentType)}
                       <h3 className={`font-bold font-mono ${getRarityColor(item.rarity)}`}>{item.name}</h3>
                     </div>
+                    <span className={`text-xs px-2 py-0.5 rounded border ${getRarityColor(item.rarity)} font-mono uppercase`}>
+                      {item.rarity}
+                    </span>
                   </div>
               
                   <p className="text-green-600 text-sm mb-2 font-mono">
@@ -232,7 +276,9 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
                     {Object.entries(item.stats).map(([stat, value]) => (
                       <div key={stat} className="flex items-center justify-between">
                         <span className="text-green-400 capitalize">{stat}</span>
-                        <span className="text-yellow-400">{value}</span>
+                        <span className={`${getStatColor(value)}`}>
+                          {value > 0 ? `+${value}` : value}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -240,10 +286,18 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
                   {item.specialEffects.length > 0 && (
                     <div className="mb-4">
                       <h4 className="text-purple-400 font-mono text-sm mb-2">Special Effects</h4>
-                      <ul className="space-y-1">
+                      <ul className="space-y-2">
                         {item.specialEffects.map((effect, i) => (
-                          <li key={i} className="text-purple-300 text-xs font-mono">
-                            • {effect.name}
+                          <li key={i} className="bg-purple-900/20 p-2 rounded border border-purple-900">
+                            <div className="text-purple-300 text-sm font-mono font-bold">
+                              {effect.name}
+                            </div>
+                            <div className="text-purple-300 text-xs font-mono mt-1">
+                              {effect.description}
+                            </div>
+                            <div className="text-green-400 text-xs font-mono mt-1">
+                              {getEffectDescription(effect.effect)}
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -316,11 +370,21 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
             <div className="space-y-2">
               {(player.inventory.bases || []).length > 0 ? (
                 (player.inventory.bases || []).map(item => (
-                  <div key={item.id} className="flex items-center justify-between bg-black/30 border border-green-900 rounded p-2">
-                    <div className="flex items-center gap-2">
-                      <Server className="w-4 h-4 text-purple-400" />
-                      <span className="text-green-400 font-mono text-sm">{item.name}</span>
+                  <div key={item.id} className="bg-black/30 border border-green-900 rounded p-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Server className="w-4 h-4 text-purple-400" />
+                        <span className="text-green-400 font-mono text-sm">{item.name}</span>
+                      </div>
+                      <span className={`text-xs ${getRarityColor(item.rarity)} font-mono`}>
+                        {item.rarity.toUpperCase()}
+                      </span>
                     </div>
+                    {item.specialEffects && item.specialEffects[0] && (
+                      <div className="mt-1 text-xs text-purple-300 font-mono">
+                        {item.specialEffects[0].name}: {getEffectDescription(item.specialEffects[0].effect)}
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (
@@ -337,11 +401,21 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
             <div className="space-y-2">
               {(player.inventory.motherboards || []).length > 0 ? (
                 (player.inventory.motherboards || []).map(item => (
-                  <div key={item.id} className="flex items-center justify-between bg-black/30 border border-green-900 rounded p-2">
-                    <div className="flex items-center gap-2">
-                      <Motherboard className="w-4 h-4 text-yellow-400" />
-                      <span className="text-green-400 font-mono text-sm">{item.name}</span>
+                  <div key={item.id} className="bg-black/30 border border-green-900 rounded p-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Motherboard className="w-4 h-4 text-yellow-400" />
+                        <span className="text-green-400 font-mono text-sm">{item.name}</span>
+                      </div>
+                      <span className={`text-xs ${getRarityColor(item.rarity)} font-mono`}>
+                        {item.rarity.toUpperCase()}
+                      </span>
                     </div>
+                    {item.specialEffects && item.specialEffects[0] && (
+                      <div className="mt-1 text-xs text-purple-300 font-mono">
+                        {item.specialEffects[0].name}: {getEffectDescription(item.specialEffects[0].effect)}
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (
@@ -358,11 +432,21 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
             <div className="space-y-2">
               {(player.inventory.components || []).length > 0 ? (
                 (player.inventory.components || []).map(item => (
-                  <div key={item.id} className="flex items-center justify-between bg-black/30 border border-green-900 rounded p-2">
-                    <div className="flex items-center gap-2">
-                      {getComponentIcon(item.componentType)}
-                      <span className="text-green-400 font-mono text-sm">{item.name}</span>
+                  <div key={item.id} className="bg-black/30 border border-green-900 rounded p-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getComponentIcon(item.componentType)}
+                        <span className="text-green-400 font-mono text-sm">{item.name}</span>
+                      </div>
+                      <span className={`text-xs ${getRarityColor(item.rarity)} font-mono`}>
+                        {item.rarity.toUpperCase()}
+                      </span>
                     </div>
+                    {item.specialEffects && item.specialEffects[0] && (
+                      <div className="mt-1 text-xs text-purple-300 font-mono">
+                        {item.specialEffects[0].name}: {getEffectDescription(item.specialEffects[0].effect)}
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (

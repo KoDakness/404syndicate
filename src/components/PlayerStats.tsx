@@ -1,6 +1,6 @@
 import React from 'react';
 import { Player } from '../types';
-import { Wallet, Shield, Ghost, Award, Bitcoin, Brain, Cpu, User, LogOut, Mail, Server } from 'lucide-react';
+import { Wallet, Shield, Ghost, Award, Bitcoin, Brain, Cpu, User, LogOut, Mail, Server, Skull } from 'lucide-react';
 
 interface PlayerStatsProps {
   player: Player;
@@ -33,15 +33,23 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onLogout }) => {
             <div className="flex items-center gap-2">
               <Wallet className="text-green-400" />
               <span className="text-green-400 font-mono">
-                ${player.credits.toLocaleString()}
+                <span className="text-xs mr-1">Credits</span>${player.credits.toLocaleString()}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Bitcoin className="text-yellow-400" />
               <span className="text-yellow-400 font-mono">
-                {player.torcoins}
+                <span className="text-xs mr-1">Torcoin</span>{player.torcoins}
               </span>
             </div>
+            {player.wraithcoins > 0 && (
+              <div className="flex items-center gap-2">
+                <Skull className="w-4 h-4 text-purple-400" />
+                <span className="text-purple-400 font-mono">
+                  <span className="text-xs mr-1">WraithCoin</span>{player.wraithcoins}
+                </span>
+              </div>
+            )}
             <button
               onClick={onLogout}
               className="flex items-center gap-2 px-3 py-1 border-2 border-red-500 rounded hover:bg-red-900/30 text-red-400 font-mono text-sm"

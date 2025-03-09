@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Player, Equipment, EquipmentLoadout } from '../types';
-import { Server, Clapperboard as Motherboard, Cpu, Brain, HardDrive, Cpu as Gpu, Power, AlertCircle } from 'lucide-react';
+import { Server, Clapperboard as Motherboard, Cpu, Brain, HardDrive, Cpu as Gpu, Power, AlertCircle, Skull } from 'lucide-react';
 
 interface LoadoutManagerProps {
   player: Player;
@@ -109,6 +109,73 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
     return stats;
   };
 
+  const getEffectDescription = (effect: string) => {
+    switch (effect) {
+      case 'completion_time_boost':
+        return 'Completes contracts 15% faster';
+      case 'max_contracts_boost':
+        return 'Allows running 1 additional contract at a time';
+      case 'credit_boost':
+        return 'Earn 20% more credits from completed contracts';
+      case 'torcoin_chance_boost':
+        return '5% extra chance to earn Torcoins from contracts';
+      case 'exp_boost':
+        return 'Earn 10% more XP from completed contracts';
+      case 'hard_contract_boost':
+        return 'Double chance to get hard (high-paying) contracts when refreshing';
+      case 'easy_contracts':
+        return 'All contracts will be easy difficulty but reward 50% credits';
+      case 'multi_boost':
+        return 'Complete contracts 15% faster, earn 20% more credits, and 5% higher Torcoin chance';
+      case 'dual_contract':
+        return 'Allows running 2 additional contracts at a time';
+      case 'master_of_all':
+        return 'Earn 10% more XP, 20% more credits, double chance for hard contracts';
+      case 'dual_boost':
+        return 'Earn 30% more credits and 20% more XP from contracts';
+      case 'advanced_torcoin_boost':
+        return '10% chance to earn Torcoins from completed contracts';
+      case 'advanced_completion_boost':
+        return 'Completes contracts 25% faster';
+      case 'wraithcoin_chance_boost':
+        return '1% chance to earn the ultra-rare WraithCoin from contracts';
+      default:
+        return 'Unknown effect';
+    }
+  };
+
+  const getStatColor = (value: number) => {
+    if (value > 0) return 'text-green-400';
+    if (value < 0) return 'text-red-400';
+    return 'text-yellow-400';
+  };
+
+  const getAllSpecialEffects = (loadout: EquipmentLoadout) => {
+    const effects: { name: string; description: string; effect: string }[] = [];
+    
+    // Get base effects
+    const base = getEquipment(loadout.baseId);
+    if (base?.specialEffects) {
+      effects.push(...base.specialEffects);
+    }
+    
+    // Get motherboard effects
+    const motherboard = getEquipment(loadout.motherboardId);
+    if (motherboard?.specialEffects) {
+      effects.push(...motherboard.specialEffects);
+    }
+    
+    // Get component effects
+    Object.values(loadout.installedComponents).forEach(componentId => {
+      const component = getEquipment(componentId);
+      if (component?.specialEffects) {
+        effects.push(...component.specialEffects);
+      }
+    });
+    
+    return effects;
+  };
+
   const handleInstallComponent = (componentId: string) => {
     if (selectedLoadout && selectedSlot) {
       onInstallComponent(selectedLoadout, selectedSlot, componentId);
@@ -150,6 +217,7 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
             const base = getEquipment(loadout.baseId);
             const motherboard = getEquipment(loadout.motherboardId);
             const stats = calculateLoadoutStats(loadout);
+            const specialEffects = getAllSpecialEffects(loadout);
             
             return (
               <div 
@@ -203,14 +271,39 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
                   </div>
                 </div>
 
+                {/* Loadout Stats */}
                 {stats && Object.keys(stats).length > 0 && (
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    {Object.entries(stats).map(([stat, value]) => (
-                      <div key={stat} className="flex items-center justify-between">
-                        <span className="text-green-600 font-mono capitalize">{stat}</span>
-                        <span className="text-green-400 font-mono">{value}</span>
-                      </div>
-                    ))}
+                  <div className="mb-6">
+                    <h5 className="text-green-400 font-mono mb-2">Stat Bonuses</h5>
+                    <div className="grid grid-cols-2 gap-4">
+                      {Object.entries(stats).map(([stat, value]) => (
+                        <div key={stat} className="flex items-center justify-between">
+                          <span className="text-green-600 font-mono capitalize">{stat}</span>
+                          <span className={`${getStatColor(value)} font-mono`}>
+                            {value > 0 ? `+${value}` : value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Special Effects */}
+                {specialEffects.length > 0 && (
+                  <div className="mb-6">
+                    <h5 className="text-purple-400 font-mono mb-2">Special Effects</h5>
+                    <div className="space-y-2">
+                      {specialEffects.map((effect, index) => (
+                        <div key={index} className="bg-purple-900/20 p-2 rounded border border-purple-900">
+                          <div className="flex justify-between">
+                            <span className="text-purple-300 font-mono text-sm">{effect.name}</span>
+                          </div>
+                          <div className="text-green-400 text-xs font-mono mt-1">
+                            {getEffectDescription(effect.effect)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -228,19 +321,26 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
                           className="bg-black/50 border-2 border-green-900/50 rounded p-3"
                         >
                           {component ? (
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                {component.componentType && getComponentIcon(component.componentType)}
-                                <span className="text-green-400 font-mono text-sm">
-                                  {component.name || 'Unknown Component'}
-                                </span>
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  {component.componentType && getComponentIcon(component.componentType)}
+                                  <span className="text-green-400 font-mono text-sm">
+                                    {component.name || 'Unknown Component'}
+                                  </span>
+                                </div>
+                                <button
+                                  onClick={() => onUninstallComponent(loadout.id, slot)}
+                                  className="text-red-400 hover:text-red-300 text-xs"
+                                >
+                                  Remove
+                                </button>
                               </div>
-                              <button
-                                onClick={() => onUninstallComponent(loadout.id, slot)}
-                                className="text-red-400 hover:text-red-300"
-                              >
-                                Remove
-                              </button>
+                              {component.specialEffects && component.specialEffects[0] && (
+                                <div className="mt-1 text-xs text-purple-300 font-mono">
+                                  {component.specialEffects[0].name}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="flex items-center justify-between">
@@ -262,6 +362,14 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
                     })}
                   </div>
                 </div>
+
+                {loadout.active && (
+                  <div className="mt-4 bg-green-900/20 p-2 rounded border border-green-500">
+                    <p className="text-green-400 font-mono text-sm text-center">
+                      This loadout is currently active
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -283,13 +391,33 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
                   <button
                     key={component.id}
                     onClick={() => handleInstallComponent(component.id)}
-                    className="w-full flex items-center justify-between bg-black/30 border border-green-900 rounded p-3 hover:bg-green-900/20 hover:border-green-500 transition-colors"
+                    className="w-full flex flex-col bg-black/30 border border-green-900 rounded p-3 hover:bg-green-900/20 hover:border-green-500 transition-colors text-left"
                   >
-                    <div className="flex items-center gap-2">
-                      {getComponentIcon(component.componentType)}
-                      <span className="text-green-400 font-mono text-sm">{component.name}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getComponentIcon(component.componentType)}
+                        <span className="text-green-400 font-mono text-sm">{component.name}</span>
+                      </div>
+                      <span className="text-green-600 font-mono text-xs capitalize">{component.componentType}</span>
                     </div>
-                    <span className="text-green-600 font-mono text-xs capitalize">{component.componentType}</span>
+                    
+                    {component.specialEffects && component.specialEffects[0] && (
+                      <div className="mt-2 text-xs">
+                        <span className="text-purple-300 font-mono">{component.specialEffects[0].name}:</span> 
+                        <span className="text-green-400 font-mono ml-1">{getEffectDescription(component.specialEffects[0].effect)}</span>
+                      </div>
+                    )}
+                    
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {Object.entries(component.stats).map(([stat, value]) => (
+                        <div key={stat} className="flex items-center justify-between">
+                          <span className="text-green-600 font-mono text-xs capitalize">{stat}</span>
+                          <span className={`${getStatColor(value)} font-mono text-xs`}>
+                            {value > 0 ? `+${value}` : value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </button>
                 ))
               ) : (

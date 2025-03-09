@@ -30,14 +30,10 @@ export interface Equipment {
   cost: number;
   torcoinCost?: number;
   stats: {
-    processing?: number;
-    memory?: number;
-    storage?: number;
-    graphics?: number;
-    stealth?: number;
-    security?: number;
-    stability?: number;
-    cooling?: number;
+    decryption?: number;
+    firewall?: number;
+    spoofing?: number;
+    social?: number;
   };
   specialEffects: {
     name: string;
@@ -116,6 +112,7 @@ export interface RandomEvent {
 export interface Player {
   credits: number;
   torcoins: number;
+  wraithcoins: number;
   last_contract_refresh: string | null;
   next_contract_refresh: string | null;
   manual_refresh_available: boolean;
