@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trophy, Bitcoin, Award } from 'lucide-react';
+import { Trophy, Bitcoin, Award, Skull } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface LeaderboardPlayer {
@@ -8,6 +8,7 @@ interface LeaderboardPlayer {
   level: number;
   credits: number;
   torcoins: number;
+  wraithcoins: number;
 }
 
 export const Leaderboard: React.FC = () => {
@@ -16,15 +17,17 @@ export const Leaderboard: React.FC = () => {
     totalPlayers: 0,
     activePlayers: 0,
     contractsCompleted: 0,
-    totalTorcoins: 0
+    totalTorcoins: 0,
+    totalWraithcoins: 0
   });
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      // Fetch top players sorted by torcoins, level, and credits
+      // Fetch top players sorted by wraithcoins, torcoins, level, and credits
       const { data: leaderboardData, error: leaderboardError } = await supabase
         .from('players')
-        .select('id, username, level, credits, torcoins')
+        .select('id, username, level, credits, torcoins, wraithcoins')
+        .order('wraithcoins', { ascending: false })
         .order('torcoins', { ascending: false })
         .order('level', { ascending: false })
         .order('credits', { ascending: false })
@@ -55,17 +58,19 @@ export const Leaderboard: React.FC = () => {
         .select('id', { count: 'exact', head: true })
         .eq('status', 'completed');
 
-      const { data: torcoinData } = await supabase
+      const { data: currencyData } = await supabase
         .from('players')
-        .select('torcoins');
+        .select('torcoins, wraithcoins');
 
-      const totalTorcoins = torcoinData?.reduce((sum, player) => sum + (player.torcoins || 0), 0) || 0;
+      const totalTorcoins = currencyData?.reduce((sum, player) => sum + (player.torcoins || 0), 0) || 0;
+      const totalWraithcoins = currencyData?.reduce((sum, player) => sum + (player.wraithcoins || 0), 0) || 0;
 
       setStats({
         totalPlayers: totalPlayers || 0,
         activePlayers: activePlayers || 0,
         contractsCompleted: contractsCompleted || 0,
-        totalTorcoins
+        totalTorcoins,
+        totalWraithcoins
       });
     };
 
@@ -97,6 +102,11 @@ export const Leaderboard: React.FC = () => {
                   <div>
                     <div className="font-mono text-green-400">{player.username}</div>
                     <div className="flex items-center gap-3 mt-1">
+                      {player.wraithcoins > 0 && (
+                        <span className="text-sm text-purple-400 font-mono flex items-center gap-1">
+                          <Skull className="w-3 h-3" /> {player.wraithcoins}
+                        </span>
+                      )}
                       <span className="text-sm text-yellow-400 font-mono flex items-center gap-1">
                         <Bitcoin className="w-3 h-3" /> {player.torcoins}
                       </span>
@@ -134,6 +144,12 @@ export const Leaderboard: React.FC = () => {
                 <span className="text-green-600 font-mono">Total Torcoins</span>
                 <span className="text-yellow-400 font-mono">{stats.totalTorcoins.toLocaleString()}</span>
               </div>
+              {stats.totalWraithcoins > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-green-600 font-mono">Total WraithCoins</span>
+                  <span className="text-purple-400 font-mono">{stats.totalWraithcoins.toLocaleString()}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
