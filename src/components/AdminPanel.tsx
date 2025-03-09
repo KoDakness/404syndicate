@@ -1,6 +1,6 @@
 import React from 'react';
 import { Player } from '../types';
-import { Terminal as TerminalIcon, Coins, Award, Brain, RefreshCw, Timer, AlertCircle } from 'lucide-react';
+import { Terminal as TerminalIcon, Coins, Award, Brain, RefreshCw, Timer, AlertCircle, Bitcoin, Skull } from 'lucide-react';
 
 interface AdminPanelProps {
   player: Player;
@@ -25,6 +25,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     onUpdatePlayer({ credits: player.credits + amount });
   };
 
+  const addTorcoins = (amount: number) => {
+    onUpdatePlayer({ torcoins: player.torcoins + amount });
+  };
+
+  const addWraithcoins = (amount: number) => {
+    onUpdatePlayer({ wraithcoins: player.wraithcoins + amount });
+  };
+
   const setLevel = (level: number) => {
     onUpdatePlayer({ level });
   };
@@ -44,6 +52,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         decryption: 99,
         firewall: 99,
         spoofing: 99,
+        social: 99,
         skillPoints: player.skills.skillPoints
       }
     });
@@ -74,6 +83,54 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               className="flex-1 px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
             >
               +100k
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div className="text-red-400 font-mono text-sm mb-2 flex items-center gap-2">
+            <Bitcoin className="w-4 h-4" />
+            Torcoins
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => addTorcoins(1)}
+              className="flex-1 px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
+            >
+              +1
+            </button>
+            <button
+              onClick={() => addTorcoins(5)}
+              className="flex-1 px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
+            >
+              +5
+            </button>
+            <button
+              onClick={() => addTorcoins(10)}
+              className="flex-1 px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
+            >
+              +10
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div className="text-red-400 font-mono text-sm mb-2 flex items-center gap-2">
+            <Skull className="w-4 h-4" />
+            Wraithcoins
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => addWraithcoins(1)}
+              className="flex-1 px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
+            >
+              +1
+            </button>
+            <button
+              onClick={() => addWraithcoins(5)}
+              className="flex-1 px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
+            >
+              +5
             </button>
           </div>
         </div>

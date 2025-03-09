@@ -143,6 +143,8 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
       const torcoins = selectedEvent.effects.rewards?.torcoins || 0;
       onReward?.(torcoins);
       onComplete?.(true);
+      // Lock the event for 7 days
+      handleLockout();
     } else {
       setMessage('Incorrect access word!');
       if (selectedEvent?.puzzle) {
@@ -294,6 +296,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
       if (selectedEvent.effects.rewards?.torcoins) {
         onReward?.(selectedEvent.effects.rewards.torcoins);
       }
+      handleLockout();
       onComplete?.(true);
     } else {
       setMessage('Incorrect sequence! SPECTRE is escaping...');
