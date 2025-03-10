@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Equipment, Player } from '../types';
-import { Cpu, Shield, Brain, Code, Bitcoin, HardDrive, Cpu as Gpu, Clapperboard as Motherboard, Server, Store, Package, Boxes, LayoutList, Skull, Repeat } from 'lucide-react';
+import { Cpu, Brain, Code, Bitcoin, HardDrive, Cpu as Gpu, Clapperboard as Motherboard, Server, Store, Package, LayoutList, Skull, Repeat } from 'lucide-react';
 import { LoadoutManager } from './LoadoutManager';
 import { playSound } from '../lib/sounds';
 

@@ -23,16 +23,16 @@ const tutorialSteps: TutorialStep[] = [
   {
     title: 'Welcome to 404 Syndicate!',
     content: 'You\'ve just joined an elite network of hackers. Let\'s get you started with the basics.',
-    highlight: '.player-stats'
+    highlight: '.terminal-panel'
   },
   {
     title: 'Your Stats',
-    content: 'This panel shows your current level, credits, and reputation. Watch these grow as you complete contracts!',
+    content: 'This panel shows your current level, credits, and reputations. Watch these grow as you complete contracts!',
     highlight: '.player-stats'
   },
   {
     title: 'Available Contracts',
-    content: 'These are your available hacking contracts. Each has different difficulty levels and rewards.',
+    content: 'These are your available hacking contracts. Each has different difficulty level and rewards.',
     highlight: '.contracts-panel'
   },
   {
@@ -42,13 +42,13 @@ const tutorialSteps: TutorialStep[] = [
   },
   {
     title: 'Equipment Shop',
-    content: 'Upgrade your hacking capabilities with new equipment. Better gear means better rewards!',
+    content: 'Upgrade your hacking capabilities with new equipment. Better gear means better rewards! You will also find the currency exchange & your loadouts here!',
     highlight: '[data-panel="equipment"]',
     panel: 'equipment'
   },
   {
     title: 'Skills',
-    content: 'Level up your hacking skills to take on more challenging contracts.',
+    content: 'Level up your hacking skills for contract completion buffs.',
     highlight: '[data-panel="skills"]',
     panel: 'skills'
   },
@@ -60,7 +60,7 @@ const tutorialSteps: TutorialStep[] = [
   },
   {
     title: 'Ready to Hack',
-    content: 'You\'re all set! Start with some easy contracts to build up your reputation and credits.',
+    content: 'You\'re all set! Start accepting some contracts to build up your reputation and credits.',
     highlight: '.contracts-panel'
   }
 ];
