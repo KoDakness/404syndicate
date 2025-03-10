@@ -115,7 +115,6 @@ export interface Player {
   credits: number;
   torcoins: number;
   wraithcoins: number;
-  equipment: Equipment;
   last_contract_refresh: string | null;
   next_contract_refresh: string | null;
   manual_refresh_available: boolean;

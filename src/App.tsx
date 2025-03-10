@@ -259,6 +259,7 @@ function App() {
             max_concurrent_jobs: initialPlayer.maxConcurrentJobs,
             reputation: initialPlayer.reputation,
             skills: initialPlayer.skills,
+            equipment: initialPlayer.equipment,
             inventory: initialPlayer.inventory,
             last_contract_refresh: now.toISOString(),
             next_contract_refresh: nextRefreshTime.toISOString(),
