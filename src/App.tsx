@@ -1,4 +1,4 @@
-import  { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Terminal } from './components/Terminal';
 import { JobCard } from './components/JobCard';
 import { PlayerStats } from './components/PlayerStats';
@@ -6,12 +6,13 @@ import { Tutorial } from './components/Tutorial';
 import { LoginForm } from './components/LoginForm';
 import { Toolbar } from './components/Toolbar';
 import { AdminPanel } from './components/AdminPanel';
+import { EventPanel } from './components/EventPanel';
 import { AlertCircle, Ghost } from 'lucide-react';
 import { availableJobs } from './data/jobs';
 import { availableEquipment } from './data/equipment';
 import { supabase } from './lib/supabase';
 import { playSound } from './lib/sounds';
-import type { Job, Player, EquipmentLoadout } from './types';
+import type { Job, Player, Equipment, EquipmentLoadout } from './types';
 
 // Helper function to get stored contracts from localStorage
 function getStoredContracts(): Job[] | null {
@@ -59,8 +60,7 @@ const initialPlayer: Player = {
     decryption: 1,
     firewall: 1,
     spoofing: 1,
-    skillPoints: 3,
-    social: 0
+    skillPoints: 3
   },
   activeJobs: [],
 };
@@ -80,7 +80,7 @@ function App() {
   const [eventKey, setEventKey] = useState(0);
   const [adminKeyPressed, setAdminKeyPressed] = useState(false);
   const [activePanel, setActivePanel] = useState<string | null>(null);
-  const [setShowTutorial] = useState<boolean>(false);
+  const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [messages, setMessages] = useState<string[]>([
     'Initializing system...',
     'Connecting to network...',
@@ -97,7 +97,7 @@ function App() {
     motherboards: [],
     components: []
   });
-  const [setIsLoadingEquipment] = useState(false);
+  const [isLoadingEquipment, setIsLoadingEquipment] = useState(false);
 
   const handleLogout = async () => {
     // Save stats before logout
@@ -108,6 +108,7 @@ function App() {
       experience: player.experience,
       reputation: player.reputation,
       skills: player.skills,
+      equipment: player.equipment,
       inventory: player.inventory
     });
     
