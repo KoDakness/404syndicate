@@ -122,7 +122,7 @@ export interface Player {
   reputation: {
     corporate: number;
     underground: number;
-    equipment: EquipmentLoadout; // Assign EquipmentLoadout here
+    equipment: EquipmentLoadout;
   };
   inventory: {
     bases?: Equipment[];
