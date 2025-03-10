@@ -1,6 +1,6 @@
 import React from 'react';
 import { Volume2, VolumeX, Volume1, Music2, Music3, Music4 } from 'lucide-react';
-import { setVolume, toggleMute, toggleMusic, setMusicVolume, startBackgroundMusic } from '../lib/sounds';
+import { playSound, setVolume, toggleMute, toggleMusic, setMusicVolume, startBackgroundMusic } from '../lib/sounds';
 
 interface TerminalProps {
   messages: string[];

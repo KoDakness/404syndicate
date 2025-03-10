@@ -1,5 +1,6 @@
-import React, {  } from 'react';
+import React, { useState } from 'react';
 import { Store, Brain, AlertCircle, Trophy, Key } from 'lucide-react';
+import { Panel } from './Panel';
 import { EquipmentShop } from './EquipmentShop';
 import { SkillTree } from './SkillTree';
 import { Leaderboard } from './Leaderboard';
@@ -33,8 +34,10 @@ interface ToolbarProps {
 export const Toolbar: React.FC<ToolbarProps> = ({
   equipment,
   onPurchase,
+  onEquip,
   activePanel,
   onPanelChange,
+  onUnequip,
   eventKey,
   isAdmin,
   playerCredits,

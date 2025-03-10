@@ -110,8 +110,6 @@ export interface RandomEvent {
 }
 
 export interface Player {
-  username: string
-  id: string;
   credits: number;
   torcoins: number;
   wraithcoins: number;
