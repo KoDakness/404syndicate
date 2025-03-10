@@ -1207,7 +1207,7 @@ function App() {
                   <span>Available Contracts</span>
                   <div className="flex items-center gap-4">
                     {nextContractRefresh && (
-                      <span className="text-sm text-green-600">
+                      <span className="text-sm text-green-600 font-mono">
                         Next refresh: {nextContractRefresh.toLocaleTimeString()}
                       </span>
                     )}
@@ -1227,7 +1227,7 @@ function App() {
                     )}
                   </div>
                 </h2>
-                <div className="max-h-[500px] overflow-y-auto scrollbar-hide pr-2">
+                <div className="max-h-[800px] overflow-y-auto scrollbar-hide pr-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {availableContracts.length > 0 ? (
                       availableContracts.map((job) => (
