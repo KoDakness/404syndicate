@@ -122,7 +122,6 @@ export interface Player {
   reputation: {
     corporate: number;
     underground: number;
-    equipment: EquipmentLoadout;
   };
   inventory: {
     bases?: Equipment[];
