@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Equipment, Player } from '../types';
-import { Cpu, Shield, Brain, Code, Bitcoin, HardDrive, Cpu as Gpu, Clapperboard as Motherboard, Server, Store, Package, Boxes, LayoutList, Skull } from 'lucide-react';
+import { Cpu, Shield, Brain, Code, Bitcoin, HardDrive, Cpu as Gpu, Clapperboard as Motherboard, Server, Store, Package, Boxes, LayoutList, Skull, Repeat } from 'lucide-react';
 import { LoadoutManager } from './LoadoutManager';
+import { playSound } from '../lib/sounds';
 
 interface EquipmentShopProps {
   equipment: Equipment[];
@@ -14,9 +15,10 @@ interface EquipmentShopProps {
   playerCredits: number;
   playerTorcoins: number;
   player: Player;
+  onUpdatePlayer?: (updates: Partial<Player>) => void;
 }
 
-type TabType = 'shop' | 'inventory';
+type TabType = 'shop' | 'exchange' | 'inventory';
 
 export const EquipmentShop: React.FC<EquipmentShopProps> = ({
   equipment,
@@ -29,6 +31,7 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
   playerCredits,
   playerTorcoins,
   player,
+  onUpdatePlayer,
 }) => {
   const [selectedBase, setSelectedBase] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('shop');
@@ -36,6 +39,7 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
   const [showCreateLoadoutModal, setShowCreateLoadoutModal] = useState<boolean>(false);
   const [displayedEquipment, setDisplayedEquipment] = useState<Equipment[]>([]);
   const [equipmentFilter, setEquipmentFilter] = useState<string>('all');
+  const [exchangeAmount, setExchangeAmount] = useState<number>(500000);
 
   useEffect(() => {
     // Filter equipment based on selected filter
@@ -168,10 +172,20 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
 
   const canCreateLoadout = player.loadouts.length < 2;
 
+  const handleExchangeCredits = () => {
+    if (onUpdatePlayer && playerCredits >= exchangeAmount) {
+      playSound('torcoin');
+      onUpdatePlayer({
+        credits: player.credits - exchangeAmount,
+        torcoins: player.torcoins + 1
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setActiveTab('shop')}
           className={`flex items-center gap-2 px-4 py-2 rounded border-2 font-mono ${
@@ -182,6 +196,17 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
         >
           <Store className="w-4 h-4" />
           Shop
+        </button>
+        <button
+          onClick={() => setActiveTab('exchange')}
+          className={`flex items-center gap-2 px-4 py-2 rounded border-2 font-mono ${
+            activeTab === 'exchange'
+              ? 'border-green-500 bg-green-900/30 text-green-400'
+              : 'border-green-900/50 text-green-600 hover:border-green-500 hover:text-green-400'
+          }`}
+        >
+          <Repeat className="w-4 h-4" />
+          Currency Exchange
         </button>
         <button
           onClick={() => setActiveTab('inventory')}
@@ -248,7 +273,7 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
               </div>
             </div>
             
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 pb-4">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 pb-4 scrollbar-hide">
               {displayedEquipment.map((item) => (
                 <div
                   key={item.id}
@@ -341,6 +366,82 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
         </div>
       )}
 
+      {/* Currency Exchange Tab */}
+      {activeTab === 'exchange' && (
+        <div className="grid grid-cols-1 gap-8">
+          <div className="bg-black/50 border-4 border-green-900/50 rounded-lg p-6">
+            <h3 className="text-green-400 font-bold font-mono mb-6">Currency Exchange</h3>
+            
+            <div className="space-y-8">
+              <div className="bg-black/30 border-2 border-green-900 rounded-lg p-4">
+                <h4 className="text-yellow-400 font-bold font-mono flex items-center gap-2 mb-4">
+                  <Bitcoin className="w-5 h-5" />
+                  Credits to Torcoins
+                </h4>
+                
+                <div className="flex items-center justify-between mb-6">
+                  <div className="text-green-400 font-mono">
+                    Exchange Rate: <span className="text-yellow-400">500,000 Credits = 1 Torcoin</span>
+                  </div>
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-green-600 font-mono text-sm mb-2">Credits to Exchange</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={exchangeAmount}
+                      onChange={(e) => setExchangeAmount(Math.max(500000, parseInt(e.target.value) || 0))}
+                      min={500000}
+                      step={500000}
+                      className="bg-black/50 border-2 border-green-900 rounded py-2 px-4 text-green-400 font-mono w-full"
+                    />
+                    <span className="text-green-400 font-mono whitespace-nowrap">
+                      = {Math.floor(exchangeAmount / 500000)} Torcoin
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="text-green-400 font-mono">
+                    <div>Your Credits: ${playerCredits.toLocaleString()}</div>
+                    <div>Your Torcoins: {playerTorcoins}</div>
+                  </div>
+                  
+                  <button
+                    onClick={handleExchangeCredits}
+                    disabled={playerCredits < exchangeAmount}
+                    className={`px-4 py-2 rounded border-2 ${
+                      playerCredits >= exchangeAmount
+                        ? 'border-yellow-500 bg-yellow-900/30 text-yellow-400 hover:bg-yellow-900/50'
+                        : 'border-gray-500 text-gray-400 cursor-not-allowed'
+                    } font-mono`}
+                  >
+                    Exchange
+                  </button>
+                </div>
+              </div>
+              
+              <div className="bg-black/30 border-2 border-green-900 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Skull className="w-5 h-5 text-purple-400" />
+                  <h4 className="text-purple-400 font-bold font-mono">About Wraithcoins</h4>
+                </div>
+                
+                <p className="text-green-600 font-mono mb-4">
+                  Wraithcoins are ultra-rare currencies that have a 1% chance to drop from completed contracts when using Wraith equipment. 
+                  They cannot be purchased directly and are reserved for the most dedicated hackers.
+                </p>
+                
+                <div className="text-purple-400 font-mono">
+                  Your Wraithcoins: {player.wraithcoins}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Combined Inventory & Loadouts View */}
       {activeTab === 'inventory' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -367,7 +468,7 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
           {/* Base Systems */}
           <div className="mb-6">
             <h4 className="text-green-600 font-mono text-sm mb-2">Base Systems ({(player.inventory.bases || []).length})</h4>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-hide">
               {(player.inventory.bases || []).length > 0 ? (
                 (player.inventory.bases || []).map(item => (
                   <div key={item.id} className="bg-black/30 border border-green-900 rounded p-2">
@@ -398,7 +499,7 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
           {/* Motherboards */}
           <div className="mb-6">
             <h4 className="text-green-600 font-mono text-sm mb-2">Motherboards ({(player.inventory.motherboards || []).length})</h4>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-hide">
               {(player.inventory.motherboards || []).length > 0 ? (
                 (player.inventory.motherboards || []).map(item => (
                   <div key={item.id} className="bg-black/30 border border-green-900 rounded p-2">
@@ -429,7 +530,7 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
           {/* Components */}
           <div>
             <h4 className="text-green-600 font-mono text-sm mb-2">Components ({(player.inventory.components || []).length})</h4>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-hide">
               {(player.inventory.components || []).length > 0 ? (
                 (player.inventory.components || []).map(item => (
                   <div key={item.id} className="bg-black/30 border border-green-900 rounded p-2">
@@ -490,7 +591,7 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
                 <div className="grid grid-cols-2 gap-6 mb-6">
                   <div>
                     <h4 className="text-green-400 font-mono text-sm mb-2">Select Base System:</h4>
-                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-hide">
                       {(player.inventory.bases || []).length > 0 ? (
                         (player.inventory.bases || []).map(base => (
                           <button
@@ -516,7 +617,7 @@ export const EquipmentShop: React.FC<EquipmentShopProps> = ({
                   
                   <div>
                     <h4 className="text-green-400 font-mono text-sm mb-2">Select Motherboard:</h4>
-                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 scrollbar-hide">
                       {(player.inventory.motherboards || []).length > 0 ? (
                         (player.inventory.motherboards || []).map(mb => (
                           <button

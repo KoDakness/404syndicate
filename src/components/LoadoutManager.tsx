@@ -212,7 +212,7 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
           <p className="text-green-600 font-mono">You have no loadouts. Create one from your inventory.</p>
         </div>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-6 max-h-[600px] overflow-y-auto pr-2 scrollbar-hide">
           {player.loadouts.map(loadout => {
             const base = getEquipment(loadout.baseId);
             const motherboard = getEquipment(loadout.motherboardId);
@@ -385,7 +385,7 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
               Select a component to install in this slot:
             </p>
             
-            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 mb-6">
+            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 mb-6 scrollbar-hide">
               {getAvailableComponents().length > 0 ? (
                 getAvailableComponents().map(component => (
                   <button

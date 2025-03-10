@@ -28,6 +28,7 @@ interface ToolbarProps {
   onInstallComponent: (loadoutId: string, slot: string, componentId: string) => void;
   onUninstallComponent: (loadoutId: string, slot: string) => void;
   onDeleteLoadout: (loadoutId: string) => void;
+  onUpdatePlayer: (updates: Partial<Player>) => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -49,6 +50,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onInstallComponent,
   onUninstallComponent,
   onDeleteLoadout,
+  onUpdatePlayer,
 }) => {  
   const togglePanel = (panelId: string) => {
     playSound('click');
@@ -136,6 +138,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 playerCredits={playerCredits}
                 playerTorcoins={playerTorcoins}
                 player={player}
+                onUpdatePlayer={onUpdatePlayer}
               />
             )}
             {activePanel === 'skills' && (
