@@ -58,6 +58,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, addMessage }) => 
         addMessage('Access granted. Welcome back, hacker.');
         onLogin();
       } else {
+        // Check if username already exists
+        const trimmedUsername = username.trim();
+        if (!trimmedUsername) {
+          throw new Error('Username cannot be empty');
+        }
+        
+        // Check if username already exists
+        const { data: existingUser } = await supabase
+          .from('players')
+          .select('id')
+          .eq('username', trimmedUsername)
+          .single();
+
+        if (existingUser) {
+          throw new Error('Username already taken');
+        }
+
         const { error: signUpError, data } = await supabase.auth.signUp({
           email,
           password,
@@ -67,22 +84,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, addMessage }) => 
         if (!data.user) throw new Error('Failed to create account');
 
         if (data.user) {
-          const trimmedUsername = username.trim();
-          if (!trimmedUsername) {
-            throw new Error('Username cannot be empty');
-          }
-          
-          // Check if username already exists
-          const { data: existingUser } = await supabase
-            .from('players')
-            .select('id')
-            .eq('username', trimmedUsername)
-            .single();
-
-          if (existingUser) {
-            throw new Error('Username already taken');
-          }
-
           // Create player profile
           const { error: profileError } = await supabase
             .from('players')

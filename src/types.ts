@@ -18,6 +18,7 @@ export interface Job {
   status: 'available' | 'in-progress' | 'completed';
   progress: number; // 0-100
   startTime?: number;
+  forcedAccept?: boolean; // Flag for contracts accepted without required skills
 }
 
 export interface Equipment {
@@ -115,6 +116,7 @@ export interface Player {
   wraithcoins: number;
   last_contract_refresh: string | null;
   next_contract_refresh: string | null;
+  next_manual_refresh?: string | null;
   manual_refresh_available: boolean;
   reputation: {
     corporate: number;

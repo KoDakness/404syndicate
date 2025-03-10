@@ -10,8 +10,8 @@ export const availableJobs: Job[] = [
     type: 'social',
     riskLevel: 'high',
     skillRequirements: {
-      social: 2,
-      spoofing: 1,
+      social: 6,
+      spoofing: 3,
     },
     messages: [
       "Analyzing executive communication patterns...",
@@ -34,8 +34,8 @@ export const availableJobs: Job[] = [
     type: 'social',
     riskLevel: 'medium',
     skillRequirements: {
-      social: 1,
-      spoofing: 2,
+      social: 3,
+      spoofing: 5,
     },
     messages: [
       "Creating convincing bonus document...",
@@ -58,8 +58,8 @@ export const availableJobs: Job[] = [
     type: 'social',
     riskLevel: 'high',
     skillRequirements: {
-      social: 3,
-      spoofing: 2,
+      social: 8,
+      spoofing: 4,
     },
     messages: [
       "Analyzing CEO writing patterns...",
@@ -82,8 +82,8 @@ export const availableJobs: Job[] = [
     type: 'social',
     riskLevel: 'high',
     skillRequirements: {
-      social: 2,
-      spoofing: 3,
+      social: 5,
+      spoofing: 7,
     },
     messages: [
       "Preparing fake security update...",
@@ -106,8 +106,8 @@ export const availableJobs: Job[] = [
     type: 'hack',
     riskLevel: 'medium',
     skillRequirements: {
-      firewall: 2,
-      spoofing: 1,
+      firewall: 4,
+      spoofing: 2,
     },
     messages: [
       "Initializing GhostNet v2.3... | Checking system integrity",
@@ -134,7 +134,7 @@ export const availableJobs: Job[] = [
     type: 'hack',
     riskLevel: 'high',
     skillRequirements: {
-      decryption: 3,
+      decryption: 10,
     },
     messages: [
       "Establishing connection to research subnet... | Port scan complete",
@@ -161,8 +161,8 @@ export const availableJobs: Job[] = [
     type: 'exploit',
     riskLevel: 'high',
     skillRequirements: {
-      decryption: 2,
-      spoofing: 2,
+      decryption: 6,
+      spoofing: 8,
     },
     messages: [
       "Analyzing blockchain network... | Block height: 1,423,897",
@@ -188,7 +188,7 @@ export const availableJobs: Job[] = [
     type: 'analyze',
     riskLevel: 'low',
     skillRequirements: {
-      firewall: 1,
+      firewall: 2,
     },
     messages: [
       "Initializing security scan... | Protocol: NIST SP 800-53",
@@ -213,7 +213,7 @@ export const availableJobs: Job[] = [
     type: 'decrypt',
     riskLevel: 'medium',
     skillRequirements: {
-      decryption: 2,
+      decryption: 3,
     },
     messages: [
       "Scanning deleted sectors...",
@@ -235,8 +235,8 @@ export const availableJobs: Job[] = [
     type: 'infiltrate',
     riskLevel: 'medium',
     skillRequirements: {
-      spoofing: 2,
-      firewall: 1,
+      spoofing: 4,
+      firewall: 2,
     },
     messages: [
       "Identifying digital footprints...",
@@ -258,8 +258,8 @@ export const availableJobs: Job[] = [
     type: 'hack',
     riskLevel: 'high',
     skillRequirements: {
-      spoofing: 3,
-      decryption: 2,
+      spoofing: 12,
+      decryption: 8,
     },
     messages: [
       "Establishing dark web connection...",
@@ -281,8 +281,8 @@ export const availableJobs: Job[] = [
     type: 'infiltrate',
     riskLevel: 'high',
     skillRequirements: {
-      decryption: 3,
-      firewall: 2,
+      decryption: 15,
+      firewall: 10,
     },
     messages: [
       "Accessing R&D network...",
@@ -326,7 +326,7 @@ export const availableJobs: Job[] = [
     type: 'exploit',
     riskLevel: 'medium',
     skillRequirements: {
-      spoofing: 2,
+      spoofing: 3,
     },
     messages: [
       "Gathering identity templates...",
@@ -348,8 +348,8 @@ export const availableJobs: Job[] = [
     type: 'exploit',
     riskLevel: 'high',
     skillRequirements: {
-      decryption: 3,
-      spoofing: 2,
+      decryption: 7,
+      spoofing: 9,
     },
     messages: [
       "Preparing ransomware package...",
@@ -371,8 +371,8 @@ export const availableJobs: Job[] = [
     type: 'infiltrate',
     riskLevel: 'high',
     skillRequirements: {
-      spoofing: 2,
-      firewall: 2,
+      spoofing: 6,
+      firewall: 5,
     },
     messages: [
       "Infiltrating corporate network...",
@@ -394,7 +394,7 @@ export const availableJobs: Job[] = [
     type: 'analyze',
     riskLevel: 'low',
     skillRequirements: {
-      firewall: 1,
+      firewall: 2,
     },
     messages: [
       "Analyzing network traffic...",
@@ -416,8 +416,8 @@ export const availableJobs: Job[] = [
     type: 'hack',
     riskLevel: 'medium',
     skillRequirements: {
-      decryption: 2,
-      spoofing: 2,
+      decryption: 4,
+      spoofing: 4,
     },
     messages: [
       "Accessing AI core...",
@@ -461,8 +461,8 @@ export const availableJobs: Job[] = [
     type: 'social',
     riskLevel: 'medium',
     skillRequirements: {
-      social: 1,
-      spoofing: 1,
+      social: 2,
+      spoofing: 2,
     },
     messages: [
       "Analyzing corporate communication patterns...",
@@ -485,8 +485,8 @@ export const availableJobs: Job[] = [
     type: 'social',
     riskLevel: 'high',
     skillRequirements: {
-      social: 2,
-      spoofing: 2,
+      social: 5,
+      spoofing: 6,
     },
     messages: [
       "Building executive profile...",
@@ -509,7 +509,7 @@ export const availableJobs: Job[] = [
     type: 'social',
     riskLevel: 'low',
     skillRequirements: {
-      social: 1,
+      social: 3,
     },
     messages: [
       "Researching company protocols...",
