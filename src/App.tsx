@@ -49,6 +49,8 @@ function App() {
   const isVisibleRef = useRef<boolean>(true);
   // Track if a level up is in progress to prevent multiple level ups
   const levelUpInProgressRef = useRef<boolean>(false);
+  // Track the last time we processed a level up to prevent duplicate processing
+  const lastLevelUpTimeRef = useRef<number>(0);
 
   const addMessage = (message: string) => {
     setMessages(prev => [...prev, message]);
@@ -251,6 +253,7 @@ function App() {
           };
           
           setPlayer(playerObj);
+          // Initialize lastExperienceUpdate with the player's current experience to prevent leveling on refresh
           setLastExperienceUpdate(playerObj.experience);
           addMessage('User data retrieved successfully.');
           
@@ -534,16 +537,25 @@ function App() {
     return () => clearInterval(progressInterval);
   }, [player, timeMultiplier]);
 
-  // XP to level conversion - improved to handle multiple level-ups properly
+  // XP to level conversion - improved to prevent multiple level-ups on refreshes
   useEffect(() => {
     if (!player || !isVisibleRef.current) return;
     
-    // Prevent multiple simultaneous level-ups
+    // Prevent multiple simultaneous level-ups or level-ups that might happen too close together
     if (levelUpInProgressRef.current) return;
+    
+    // Prevent level ups from triggering again on refresh or tab switching
+    // by checking if the experience hasn't changed from our last known value
+    if (player.experience === lastExperienceUpdate) return;
+    
+    // Prevent rapid-fire level-ups (e.g., from multiple refreshes in a short time)
+    const now = Date.now();
+    if (now - lastLevelUpTimeRef.current < 2000) return; // At least 2 seconds between level-up operations
     
     // Check if player has enough XP for a level up
     if (player.experience >= 1000) {
       levelUpInProgressRef.current = true;
+      lastLevelUpTimeRef.current = now;
       
       // Calculate how many levels should be gained
       const levelsToGain = Math.floor(player.experience / 1000);
@@ -559,33 +571,37 @@ function App() {
       }
       playSound('complete');
       
+      // Important: Update lastExperienceUpdate BEFORE the player update
+      // to prevent any race conditions in the state
+      const newExp = remainingXP;
+      setLastExperienceUpdate(newExp);
+      
       // Update player data
       updatePlayer({
         level: newLevel,
-        experience: remainingXP,
+        experience: newExp,
         skills: {
           ...player.skills,
           skillPoints: newSkillPoints
         }
       })
-      .then(() => {
-        setLastExperienceUpdate(remainingXP); // Update after success
-      })
       .catch((error) => {
         console.error('Failed to process level up:', error);
         addMessage('ERROR: Failed to process level up. Please refresh the page.');
+        // Reset lastExperienceUpdate if the update failed
+        setLastExperienceUpdate(player.experience);
       })
       .finally(() => {
         // Always reset the flag
         setTimeout(() => {
           levelUpInProgressRef.current = false;
-        }, 500);
+        }, 1000); // Longer timeout to ensure we don't get rapid-fire level-ups
       });
-    } else if (player.experience !== lastExperienceUpdate) {
+    } else {
       // If experience changed but not enough for level up, just update tracking
       setLastExperienceUpdate(player.experience);
     }
-  }, [player?.experience, lastExperienceUpdate]);
+  }, [player?.experience]);
 
   // Job acceptance
   const handleAcceptJob = async (job: Job, forcedAccept = false) => {
@@ -1207,7 +1223,7 @@ function App() {
                   <span>Available Contracts</span>
                   <div className="flex items-center gap-4">
                     {nextContractRefresh && (
-                      <span className="text-sm text-green-600 font-mono">
+                      <span className="text-sm text-green-600">
                         Next refresh: {nextContractRefresh.toLocaleTimeString()}
                       </span>
                     )}
@@ -1227,7 +1243,7 @@ function App() {
                     )}
                   </div>
                 </h2>
-                <div className="max-h-[800px] overflow-y-auto scrollbar-hide pr-2">
+                <div className="max-h-[500px] overflow-y-auto scrollbar-hide pr-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {availableContracts.length > 0 ? (
                       availableContracts.map((job) => (

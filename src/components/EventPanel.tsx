@@ -92,6 +92,13 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
   const [codeSnippets, setCodeSnippets] = useState<string[]>([]);
   const [selectedRoutes, setSelectedRoutes] = useState<string[]>([]);
 
+  // Log current lockout status on mount for debugging
+  useEffect(() => {
+    console.log("Current lockout status:");
+    console.log("Icebreaker locked until:", lockedUntil ? new Date(lockedUntil).toLocaleString() : "Not locked");
+    console.log("Ghost locked until:", ghostLockedUntil ? new Date(ghostLockedUntil).toLocaleString() : "Not locked");
+  }, []);
+
   const handleSymbolClick = (symbol: string) => {
     if (userSequence.length < 6) {
       setUserSequence(prev => prev + symbol);
@@ -159,6 +166,17 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
   };
 
   const selectEvent = (event: RandomEvent) => {
+    // Double-check if the event is locked before selecting it
+    if (event.id === 'icebreaker_001' && lockedUntil && Date.now() < lockedUntil) {
+      console.log("Icebreaker event is locked, cannot select.");
+      return;
+    }
+    
+    if (event.id === 'ghost_in_machine_001' && ghostLockedUntil && Date.now() < ghostLockedUntil) {
+      console.log("Ghost event is locked, cannot select.");
+      return;
+    }
+    
     setSelectedEvent(event);
     setTimeLeft(event.puzzle?.timeLimit || 0);
     if (event.id === 'ghost_in_machine_001') {
@@ -170,45 +188,55 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
     setCurrentPhase(0);
     setGameStatus('playing');
     setMessage('');
+    
+    console.log(`Selected event: ${event.id}`);
   };
 
   // Check for weekly lockout
   const handleLockout = () => {
+    if (!selectedEvent) return;
+    
+    // Set lockout for 7 days (in milliseconds)
     const lockoutTime = Date.now() + (7 * 24 * 60 * 60 * 1000);
-    if (selectedEvent?.id === 'icebreaker_001') {
+    
+    if (selectedEvent.id === 'icebreaker_001') {
       setLockedUntil(lockoutTime);
       localStorage.setItem('icebreaker_lockout', lockoutTime.toString());
-    } else if (selectedEvent?.id === 'ghost_in_machine_001') {
+      console.log(`Icebreaker event locked until: ${new Date(lockoutTime).toLocaleString()}`);
+    } else if (selectedEvent.id === 'ghost_in_machine_001') {
       setGhostLockedUntil(lockoutTime);
       localStorage.setItem('ghost_lockout', lockoutTime.toString());
+      console.log(`Ghost event locked until: ${new Date(lockoutTime).toLocaleString()}`);
     }
   };
 
   const handleReset = () => {
-    setLockedUntil(null);
-    setGhostLockedUntil(null);
-    setSelectedEvent(null);
-    setCurrentPhase(0);
-    setMessage('');
-    setGameStatus('playing');
-    setSelectedCoordinate('');
-    if (selectedEvent?.id === 'ghost_in_machine_001') {
-      setCodeSnippets([...selectedEvent.puzzle!.data.codeSnippets]);
+    if (isAdmin) {
+      console.log("Admin reset: Clearing all lockouts");
+      setLockedUntil(null);
+      setGhostLockedUntil(null);
+      localStorage.removeItem('icebreaker_lockout');
+      localStorage.removeItem('ghost_lockout');
+      setSelectedEvent(null);
+      setCurrentPhase(0);
+      setMessage('');
+      setGameStatus('playing');
+      setSelectedCoordinate('');
+      setSelectedRoutes([]);
+      onReset?.();
     }
-    setSelectedRoutes([]);
-    localStorage.removeItem('icebreaker_lockout');
-    localStorage.removeItem('ghost_lockout');
-    onReset?.();
   };
 
+  // Admin reset handler
   useEffect(() => {
     if (isAdmin) {
-      handleReset();
+      console.log("Admin mode detected, providing reset capability");
     }
-  }, [isAdmin, lockedUntil, ghostLockedUntil]);
+  }, [isAdmin]);
 
+  // Timer effect for event countdown
   useEffect(() => {
-    if (gameStatus !== 'playing') return;
+    if (gameStatus !== 'playing' || !selectedEvent) return;
     
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -224,7 +252,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameStatus]);
+  }, [gameStatus, selectedEvent]);
 
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
@@ -309,14 +337,23 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
     }
   };
 
+  // Function to check if an event is currently locked
+  const isEventLocked = (eventId: string) => {
+    if (eventId === 'icebreaker_001') {
+      return lockedUntil !== null && Date.now() < lockedUntil;
+    } else if (eventId === 'ghost_in_machine_001') {
+      return ghostLockedUntil !== null && Date.now() < ghostLockedUntil;
+    }
+    return false;
+  };
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       {!selectedEvent ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {events.map(event => {
-            const isLocked = event.id === 'icebreaker_001'
-              ? (lockedUntil && Date.now() < lockedUntil)
-              : (ghostLockedUntil && Date.now() < ghostLockedUntil);
+            const isLocked = isEventLocked(event.id);
+            const lockoutTime = event.id === 'icebreaker_001' ? lockedUntil : ghostLockedUntil;
             
             return (
               <div
@@ -346,11 +383,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
                     <div className="text-center">
                       <Lock className="w-8 h-8 text-red-400 mx-auto mb-2" />
                       <p className="text-red-400 font-mono">
-                        Available in {Math.ceil((
-                          event.id === 'icebreaker_001' 
-                            ? (lockedUntil! - Date.now()) 
-                            : (ghostLockedUntil! - Date.now())
-                        ) / (24 * 60 * 60 * 1000))} days
+                        Available in {Math.ceil((lockoutTime! - Date.now()) / (24 * 60 * 60 * 1000))} days
                       </p>
                     </div>
                   </div>
@@ -367,7 +400,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
             {selectedEvent.name}
           </h3>
           <div className="flex items-center gap-4">
-            {isAdmin && lockedUntil && (
+            {isAdmin && (
               <button
                 onClick={handleReset}
                 className="px-3 py-1 border-2 border-red-500 rounded hover:bg-red-900/30 text-red-400 font-mono text-sm"
@@ -384,8 +417,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
         
         <p className="text-green-400 font-mono mb-6">{selectedEvent.description}</p>
         
-        {((selectedEvent.id === 'icebreaker_001' && lockedUntil && Date.now() < lockedUntil) ||
-          (selectedEvent.id === 'ghost_in_machine_001' && ghostLockedUntil && Date.now() < ghostLockedUntil)) ? (
+        {isEventLocked(selectedEvent.id) ? (
           <div className="text-center p-6 rounded-lg border-2 border-red-500">
             <h4 className="text-xl font-bold font-mono mb-4 text-red-400">System Locked</h4>
             <p className="font-mono text-red-400">
@@ -641,7 +673,7 @@ const EventPanel: React.FC<EventPanelProps> = ({ onComplete, isAdmin, onReset, o
             <h4 className="text-xl font-bold font-mono mb-4">
               {gameStatus === 'won' ? 'Mission Accomplished' : 'Mission Failed'}
             </h4>
-            <p className="font-mono">{message}{gameStatus === 'lost' && !lockedUntil && ' System will be locked for 7 days.'}</p>
+            <p className="font-mono">{message}{gameStatus === 'lost' && ' System will be locked for 7 days.'}</p>
             {gameStatus === 'won' && (
               <div className="mt-6 space-y-2 text-left">
                 <div className="text-yellow-400 font-mono">Rewards:</div>
