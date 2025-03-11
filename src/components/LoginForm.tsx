@@ -108,6 +108,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, addMessage }) => 
 
   return (
     <div className="relative">
+       <h1 className="text-center text-4xl font-bold mb-4 text-green-500">404 SYNDICATE</h1>
       <div className="bg-black/50 border-4 border-green-900/50 rounded-lg p-6 max-w-md mx-auto relative z-10">
         <div className="flex items-center gap-2 mb-6">
           <TerminalIcon className="w-6 h-6 text-green-400" />
@@ -193,7 +194,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, addMessage }) => 
             </div>
             <div className="flex justify-center gap-4">
               <a
-                href="https://discord.gg/QmdfwQH7"
+                href="https://discord.gg/AkuhFXsg"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-3 py-1 rounded border border-green-900 hover:border-green-500 text-green-400 font-mono text-sm transition-colors"
