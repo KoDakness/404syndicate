@@ -1,6 +1,6 @@
 import React from 'react';
-import { Volume2, VolumeX, Volume1, Music2, Music3, Music4 } from 'lucide-react';
-import { playSound, setVolume, toggleMute, toggleMusic, setMusicVolume, startBackgroundMusic } from '../lib/sounds';
+import { Volume2, VolumeX, Volume1, Music2, Music3, Music4, SkipForward, SkipBack } from 'lucide-react';
+import { playSound, setVolume, toggleMute, toggleMusic, setMusicVolume, startBackgroundMusic, playNextTrack, playPreviousTrack } from '../lib/sounds';
 
 interface TerminalProps {
   messages: string[];
@@ -54,23 +54,14 @@ export const Terminal: React.FC<TerminalProps> = ({ messages }) => {
           </div>
         ))}
         <div className="text-green-400 animate-pulse mt-1 sm:mt-2">
-          <span className="text-blue-400">{'>'}</span> _
+          <span className="text-blue-400">{'>'}</span> _ 
         </div>
       </div>
       
       <div className="absolute bottom-4 right-4 flex items-center gap-4 bg-black/80 px-4 py-2 rounded-lg border border-green-900">
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleMusicMuteToggle}
-            className="text-green-400 hover:text-green-300 transition-colors"
-          >
-            {isMusicMuted ? (
-              <Music4 className="w-5 h-5" />
-            ) : musicVolume <= 0.5 ? (
-              <Music2 className="w-5 h-5" />
-            ) : (
-              <Music3 className="w-5 h-5" />
-            )}
+          <button onClick={handleMusicMuteToggle} className="text-green-400 hover:text-green-300 transition-colors">
+            {isMusicMuted ? <Music4 className="w-5 h-5" /> : musicVolume <= 0.5 ? <Music2 className="w-5 h-5" /> : <Music3 className="w-5 h-5" />}
           </button>
           <input
             type="range"
@@ -82,19 +73,13 @@ export const Terminal: React.FC<TerminalProps> = ({ messages }) => {
             className="w-24 accent-green-500"
           />
         </div>
+        
         <div className="w-px h-6 bg-green-900/50" />
-        <button
-          onClick={handleMuteToggle}
-          className="text-green-400 hover:text-green-300 transition-colors"
-        >
-          {isMuted ? (
-            <VolumeX className="w-5 h-5" />
-          ) : volume <= 0.5 ? (
-            <Volume1 className="w-5 h-5" />
-          ) : (
-            <Volume2 className="w-5 h-5" />
-          )}
+        
+        <button onClick={handleMuteToggle} className="text-green-400 hover:text-green-300 transition-colors">
+          {isMuted ? <VolumeX className="w-5 h-5" /> : volume <= 0.5 ? <Volume1 className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
         </button>
+        
         <input
           type="range"
           min="0"
@@ -104,6 +89,14 @@ export const Terminal: React.FC<TerminalProps> = ({ messages }) => {
           onChange={handleVolumeChange}
           className="w-24 accent-green-500"
         />
+        
+        <button onClick={playPreviousTrack} className="text-green-400 hover:text-green-300">
+          <SkipBack className="w-5 h-5" />
+        </button>
+        
+        <button onClick={playNextTrack} className="text-green-400 hover:text-green-300">
+          <SkipForward className="w-5 h-5" />
+        </button>
       </div>
     </div>
   );
