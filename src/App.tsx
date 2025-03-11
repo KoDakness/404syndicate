@@ -56,23 +56,57 @@ function App() {
     setMessages(prev => [...prev, message]);
   };
 
-  const addChatMessage = (message: string) => {
-    if (player) {
-      setChatMessages(prev => [...prev, `${player.username}: ${message}`]);
+  const addChatMessage = async (message: string) => {
+    if (!player || !user) return;
+    
+    try {
+      // Add message to Supabase chat table
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert([
+          {
+            username: player.username,
+            content: message,
+            type: 'user'
+          }
+        ]);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error adding chat message:', error);
+      addMessage(`ERROR: Failed to send chat message: ${(error as Error).message}`);
     }
   };
 
-  const addSystemChatMessage = (message: string) => {
-    setChatMessages(prev => [...prev, message]);
+  const addSystemChatMessage = async (message: string) => {
+    try {
+      // Add system message to Supabase chat table
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert([
+          {
+            username: 'SYSTEM',
+            content: message,
+            type: 'system'
+          }
+        ]);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error adding system chat message:', error);
+    }
   };
 
   // Admin panel keyboard shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Toggle admin panel with Ctrl+Shift+A
+      // Toggle admin panel with Ctrl+Shift+A, but only if the user is an admin
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
         e.preventDefault();
-        setShowAdminPanel(prev => !prev);
+        // Only toggle admin panel if user is actually an admin
+        if (isAdmin) {
+          setShowAdminPanel(prev => !prev);
+        }
       }
     };
     
@@ -81,7 +115,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [isAdmin]);
 
   // Visibility change handling to prevent false level ups
   useEffect(() => {
@@ -105,6 +139,8 @@ function App() {
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setPlayer(null);
+        setIsAdmin(false); // Reset admin status on logout
+        setShowAdminPanel(false); // Hide admin panel on logout
         addMessage('Logged out successfully.');
       }
     });
@@ -138,10 +174,15 @@ function App() {
       }
       
       // Set admin status based on whether a record was found
-      const isAdmin = !!data;
-      setIsAdmin(isAdmin);
+      const isUserAdmin = !!data;
+      setIsAdmin(isUserAdmin);
       
-      if (isAdmin) {
+      // If user is not an admin, make sure admin panel is closed
+      if (!isUserAdmin) {
+        setShowAdminPanel(false);
+      }
+      
+      if (isUserAdmin) {
         addMessage('Administrator access granted. Additional controls available.');
       }
     } catch (error) {
@@ -452,7 +493,7 @@ function App() {
                     });
                     
                     // Add to global chat
-                    addSystemChatMessage(`SYSTEM: ${player.username} just found a torcoin!`);
+                    addSystemChatMessage(`${player.username} just found a torcoin!`);
                   }
                 }
                 
@@ -476,7 +517,7 @@ function App() {
                     });
                     
                     // Add to global chat
-                    addSystemChatMessage(`SYSTEM: ${player.username} found a wraithcoin!`);
+                    addSystemChatMessage(`${player.username} found a wraithcoin!`);
                   }
                 }
                 
@@ -890,7 +931,7 @@ function App() {
     
     // Add to global chat for legendary or rare items
     if (item.rarity === 'legendary') {
-      addSystemChatMessage(`SYSTEM: ${player.username} bought a ${item.name}!`);
+      addSystemChatMessage(`${player.username} bought a ${item.name}!`);
     }
   };
 
@@ -1158,7 +1199,7 @@ function App() {
     
     if (torcoins > 0) {
       addMessage(`Earned ${torcoins} Torcoin${torcoins !== 1 ? 's' : ''}!`);
-      addSystemChatMessage(`SYSTEM: ${player.username} earned ${torcoins} Torcoin${torcoins !== 1 ? 's' : ''} from an event!`);
+      addSystemChatMessage(`${player.username} earned ${torcoins} Torcoin${torcoins !== 1 ? 's' : ''} from an event!`);
     }
   };
 
@@ -1267,7 +1308,7 @@ function App() {
                 </div>
               </div>
               
-              {/* Admin panel - shown when isAdmin is true */}
+              {/* Admin panel - shown only if isAdmin is true and showAdminPanel is true */}
               {isAdmin && showAdminPanel && (
                 <AdminPanel 
                   player={player}

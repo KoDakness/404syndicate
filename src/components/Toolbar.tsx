@@ -124,6 +124,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <Trophy className="w-5 h-5" />
             <span className="font-mono">Leaderboard</span>
           </button>
+          {/* Only show admin button if user is admin */}
           {isAdmin && (
             <button
               onClick={() => togglePanel('admin')}
@@ -191,6 +192,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             {activePanel === 'settings' && (
               <SettingsPanel onClose={() => onPanelChange(null)} />
             )}
+            {/* Only render admin panel if user is admin */}
             {activePanel === 'admin' && isAdmin && (
               <AdminManagement playerIsAdmin={isAdmin} />
             )}

@@ -1,38 +1,191 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare, Send, RefreshCw } from 'lucide-react';
 import { playChatSound } from '../lib/sounds';
+import { supabase } from '../lib/supabase';
 
 interface GlobalChatProps {
   messages: string[];
   onSendMessage: (message: string) => void;
 }
 
+interface ChatMessage {
+  id: string;
+  username: string;
+  content: string;
+  type: 'user' | 'system';
+  created_at: string;
+}
+
 export const GlobalChat: React.FC<GlobalChatProps> = ({ messages, onSendMessage }) => {
   const chatRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
-  const [prevMessageCount, setPrevMessageCount] = useState(0);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
+  const [subscriptionRetries, setSubscriptionRetries] = useState(0);
 
+  // Fetch existing messages and subscribe to new ones
+  useEffect(() => {
+    let subscription: any;
+    let mounted = true;
+
+    const setupRealtimeSubscription = async () => {
+      try {
+        // Set up the real-time subscription
+        setConnectionStatus('connecting');
+        
+        // Create a channel with a unique name to avoid conflicts
+        const channelName = `realtime-chat-${Date.now()}`;
+        
+        subscription = supabase
+          .channel(channelName)
+          .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'chat_messages' 
+          }, (payload) => {
+            if (!mounted) return;
+            
+            const newMessage = payload.new as ChatMessage;
+            console.log('Received new message:', newMessage);
+            
+            setChatMessages(prev => [...prev, newMessage]);
+            
+            // Play sound for new messages from others
+            if (newMessage.type === 'user') {
+              playChatSound();
+            }
+          })
+          .subscribe((status) => {
+            console.log('Subscription status:', status);
+            
+            if (status === 'SUBSCRIBED') {
+              setConnectionStatus('connected');
+            } else if (status === 'CHANNEL_ERROR') {
+              setConnectionStatus('disconnected');
+              
+              // Try to reconnect after a delay
+              setTimeout(() => {
+                if (mounted) {
+                  setSubscriptionRetries(prev => prev + 1);
+                  if (subscription) {
+                    supabase.removeChannel(subscription);
+                  }
+                  setupRealtimeSubscription();
+                }
+              }, 5000); // 5 second delay before reconnecting
+            }
+          });
+      } catch (error) {
+        console.error('Error setting up real-time subscription:', error);
+        setConnectionStatus('disconnected');
+      }
+    };
+
+    const fetchMessages = async () => {
+      setIsLoading(true);
+      try {
+        // Get most recent messages (limit 50)
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+          
+        if (error) throw error;
+        
+        if (mounted) {
+          // Reverse to show oldest first
+          setChatMessages(data ? [...data].reverse() : []);
+        }
+      } catch (error) {
+        console.error('Error fetching chat messages:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+
+      // Set up real-time subscription after fetching messages
+      setupRealtimeSubscription();
+    };
+
+    fetchMessages();
+
+    // Clean up on unmount
+    return () => {
+      mounted = false;
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
+    };
+  }, [subscriptionRetries]);
+
+  // Scroll to bottom when messages change
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
-    
-    // Play sound if new message arrived (but not for initial load)
-    if (prevMessageCount > 0 && messages.length > prevMessageCount) {
-      // Only play sound for messages from others (not your own messages)
-      const latestMessage = messages[messages.length - 1];
-      if (!latestMessage.includes(': ') || !latestMessage.startsWith('SYSTEM:')) {
-        playChatSound();
-      }
+  }, [chatMessages]);
+
+  const handleRefreshChat = async () => {
+    setIsLoading(true);
+    try {
+      // Get most recent messages (limit 50)
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+        
+      if (error) throw error;
+      
+      // Reverse to show oldest first
+      setChatMessages(data ? [...data].reverse() : []);
+    } catch (error) {
+      console.error('Error refreshing chat messages:', error);
+    } finally {
+      setIsLoading(false);
     }
     
-    setPrevMessageCount(messages.length);
-  }, [messages, prevMessageCount]);
+    // Force reconnect by incrementing retry counter
+    setSubscriptionRetries(prev => prev + 1);
+  };
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      onSendMessage(message);
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    
+    try {
+      // Get current username from local player state
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      // Get player info to get username
+      const { data: playerData } = await supabase
+        .from('players')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+        
+      if (!playerData) return;
+      
+      // Insert message into database
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert([
+          {
+            username: playerData.username,
+            content: message,
+            type: 'user'
+          }
+        ]);
+        
+      if (error) throw error;
+      
+      // Clear input
       setMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
     }
   };
 
@@ -42,35 +195,27 @@ export const GlobalChat: React.FC<GlobalChatProps> = ({ messages, onSendMessage 
     }
   };
 
-  const renderMessage = (msg: string) => {
-    // Check if it's a system message
-    if (msg.startsWith('SYSTEM:')) {
+  const renderMessage = (msg: ChatMessage) => {
+    // Handle system messages
+    if (msg.type === 'system') {
       // Handle special system messages differently
-      if (msg.includes('just found a torcoin') || 
-          msg.includes('bought a') || 
-          msg.includes('found a wraithcoin') ||
-          msg.includes('earned')) {
-        return <div className="text-yellow-400 font-mono text-xs sm:text-sm">{msg}</div>;
+      if (msg.content.includes('just found a torcoin') || 
+          msg.content.includes('bought a') || 
+          msg.content.includes('found a wraithcoin') ||
+          msg.content.includes('earned')) {
+        return <div className="text-yellow-400 font-mono text-xs sm:text-sm">{`SYSTEM: ${msg.content}`}</div>;
       }
       // Regular system message
-      return <div className="text-blue-400 font-mono text-xs sm:text-sm">{msg}</div>;
+      return <div className="text-blue-400 font-mono text-xs sm:text-sm">{`SYSTEM: ${msg.content}`}</div>;
     }
     
-    // Regular chat message
-    const parts = msg.split(': ');
-    if (parts.length >= 2) {
-      const username = parts[0];
-      const content = parts.slice(1).join(': ');
-      return (
-        <div className="text-green-400 font-mono text-xs sm:text-sm">
-          <span className="text-blue-400">{username}: </span>
-          <span>{content}</span>
-        </div>
-      );
-    }
-    
-    // Fallback for messages that don't follow the expected format
-    return <div className="text-green-400 font-mono text-xs sm:text-sm">{msg}</div>;
+    // User message
+    return (
+      <div className="text-green-400 font-mono text-xs sm:text-sm">
+        <span className="text-blue-400">{msg.username}: </span>
+        <span>{msg.content}</span>
+      </div>
+    );
   };
 
   return (
@@ -78,18 +223,48 @@ export const GlobalChat: React.FC<GlobalChatProps> = ({ messages, onSendMessage 
       <div className="bg-black/90 border-2 sm:border-4 border-green-900/50 rounded-lg p-3 sm:p-6 h-[400px] lg:h-[600px] flex flex-col shadow-xl shadow-green-900/30">
         <div className="flex items-center gap-2 mb-3">
           <MessageSquare className="w-4 h-4 text-green-400" />
-          <h2 className="text-green-400 font-mono text-sm">Global Network</h2>
+          <h2 className="text-green-400 font-mono text-sm flex items-center justify-between w-full">
+            <span>Global Network</span>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs ${
+                connectionStatus === 'connected' ? 'text-green-400' :
+                connectionStatus === 'connecting' ? 'text-yellow-400' :
+                'text-red-400'
+              }`}>
+                {connectionStatus === 'connected' ? 'Connected' :
+                 connectionStatus === 'connecting' ? 'Connecting...' :
+                 'Disconnected'}
+              </span>
+              <button 
+                onClick={handleRefreshChat}
+                className="text-green-600 hover:text-green-400"
+                title="Refresh chat"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+          </h2>
         </div>
         
         <div 
           className="flex-1 overflow-y-auto scrollbar-hide mb-3"
           ref={chatRef}
         >
-          {messages.map((message, index) => (
-            <div key={index} className="mb-1 sm:mb-2 leading-relaxed">
-              {renderMessage(message)}
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-green-600 font-mono text-sm">Connecting to global network...</p>
             </div>
-          ))}
+          ) : chatMessages.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-green-600 font-mono text-sm">No messages yet. Be the first to write something!</p>
+            </div>
+          ) : (
+            chatMessages.map((msg) => (
+              <div key={msg.id} className="mb-1 sm:mb-2 leading-relaxed">
+                {renderMessage(msg)}
+              </div>
+            ))
+          )}
         </div>
         
         <div className="flex gap-2">
