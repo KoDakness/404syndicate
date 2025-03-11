@@ -1,3 +1,4 @@
+GAME DESCRIPTION:
 
 SYNDICATE 404: Hack the System. Own the Grid.
 In a fractured digital world, four powerful factions battle for control of the global network. Choose your side, complete high-risk contracts, and become the ultimate hacker in the underground world of Syndicate 404.
