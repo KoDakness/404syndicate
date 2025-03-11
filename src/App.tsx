@@ -19,6 +19,14 @@ const REFRESH_COOLDOWN = 15 * 60 * 1000; // 15 minutes
 const MANUAL_REFRESH_COOLDOWN = 12 * 60 * 60 * 1000; // 12 hours
 const MAX_AVAILABLE_CONTRACTS = 8;
 
+// Experience requirements for different level tiers
+const getExpRequiredForLevel = (level: number): number => {
+  if (level >= 75) return 40000;
+  if (level >= 60) return 25000;
+  if (level >= 40) return 10000;
+  return 2200; // Base experience requirement
+};
+
 function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [chatMessages, setChatMessages] = useState<string[]>([
@@ -45,12 +53,17 @@ function App() {
   const [nextManualRefresh, setNextManualRefresh] = useState<Date | null>(null);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [lastExperienceUpdate, setLastExperienceUpdate] = useState<number>(0);
+  const [showRefreshWarning, setShowRefreshWarning] = useState(false);
   const contractCheckRef = useRef<NodeJS.Timeout | null>(null);
   const isVisibleRef = useRef<boolean>(true);
   // Track if a level up is in progress to prevent multiple level ups
   const levelUpInProgressRef = useRef<boolean>(false);
   // Track the last time we processed a level up to prevent duplicate processing
   const lastLevelUpTimeRef = useRef<number>(0);
+  // Track the last saved experience value to prevent issues on login/logout
+  const lastSavedExperienceRef = useRef<number>(0);
+  // Keep record of the completed job IDs to prevent duplicate XP awards
+  const completedJobIdsRef = useRef<Set<string>>(new Set());
 
   const addMessage = (message: string) => {
     setMessages(prev => [...prev, message]);
@@ -141,6 +154,8 @@ function App() {
         setPlayer(null);
         setIsAdmin(false); // Reset admin status on logout
         setShowAdminPanel(false); // Hide admin panel on logout
+        // Clear the completed jobs reference when logging out
+        completedJobIdsRef.current.clear();
         addMessage('Logged out successfully.');
       }
     });
@@ -201,7 +216,7 @@ function App() {
         return currentJob;
       }
       
-      // Reset completed jobs back to available
+      // Reset all other jobs back to available
       return {
         ...templateJob,
         status: 'available',
@@ -214,27 +229,29 @@ function App() {
   };
 
   // Select random contracts
-  const selectRandomContracts = (allJobs: Job[], activeJobIds: string[]) => {
-    // Ensure all in-progress jobs are included first
-    const inProgressJobs = allJobs.filter(job => job.status === 'in-progress');
+  const selectRandomContracts = (allJobs: Job[], inProgressJobIds: string[]) => {
+    // First, ensure all in-progress jobs are included
+    const inProgressJobs = allJobs.filter(job => inProgressJobIds.includes(job.id));
     
-    // Filter out jobs that are in progress or completed
-    const availableJobs = allJobs.filter(job => 
-      !activeJobIds.includes(job.id) && 
-      job.status !== 'in-progress' && 
-      job.status !== 'completed'
-    );
+    // Get all jobs that are not in-progress to select from
+    const otherJobs = allJobs.filter(job => !inProgressJobIds.includes(job.id));
     
-    // If we have fewer available jobs than MAX_AVAILABLE_CONTRACTS (minus in-progress jobs), return all available jobs
-    const remainingSlots = MAX_AVAILABLE_CONTRACTS - inProgressJobs.length;
-    
-    if (availableJobs.length <= remainingSlots) {
-      return [...inProgressJobs, ...availableJobs];
+    // If including in-progress jobs leaves no room for more, just return those
+    if (inProgressJobs.length >= MAX_AVAILABLE_CONTRACTS) {
+      return inProgressJobs.slice(0, MAX_AVAILABLE_CONTRACTS);
     }
     
-    // Otherwise, select random jobs for the remaining slots
-    const shuffled = [...availableJobs].sort(() => 0.5 - Math.random());
-    return [...inProgressJobs, ...shuffled.slice(0, remainingSlots)];
+    // Determine how many more jobs we can show
+    const slotsRemaining = MAX_AVAILABLE_CONTRACTS - inProgressJobs.length;
+    
+    // If we have fewer available jobs than slots, show all of them
+    if (otherJobs.length <= slotsRemaining) {
+      return [...inProgressJobs, ...otherJobs];
+    }
+    
+    // Otherwise randomly select remaining jobs
+    const shuffledJobs = [...otherJobs].sort(() => 0.5 - Math.random());
+    return [...inProgressJobs, ...shuffledJobs.slice(0, slotsRemaining)];
   };
 
   // Player data fetch
@@ -254,7 +271,7 @@ function App() {
           if (playerError) throw playerError;
           if (!playerData) throw new Error('Player data not found');
           
-          // Fetch active jobs
+          // Fetch ONLY the player's in-progress and completed jobs
           const { data: playerJobs, error: jobsError } = await supabase
             .from('player_jobs')
             .select('*')
@@ -296,44 +313,59 @@ function App() {
           setPlayer(playerObj);
           // Initialize lastExperienceUpdate with the player's current experience to prevent leveling on refresh
           setLastExperienceUpdate(playerObj.experience);
+          // Also store in the ref for consistent tracking across sessions
+          lastSavedExperienceRef.current = playerObj.experience;
+          
           addMessage('User data retrieved successfully.');
+          
+          // Get in-progress job IDs
+          const inProgressJobIds = playerJobs
+            .filter(job => job.status === 'in-progress')
+            .map(job => job.job_id);
+            
+          // Get completed job IDs
+          const completedJobIds = playerJobs
+            .filter(job => job.status === 'completed')
+            .map(job => job.job_id);
+            
+          // Initialize completed job IDs set to prevent duplicate XP awards
+          completedJobIdsRef.current = new Set(completedJobIds);
           
           // Process all jobs with statuses
           const jobsWithStatus = availableJobs.map(job => {
-            const playerJob = playerJobs.find(pj => pj.job_id === job.id);
-            
-            if (playerJob) {
-              if (playerJob.status === 'in-progress') {
-                return {
-                  ...job,
-                  status: 'in-progress' as const,
-                  progress: playerJob.progress,
-                  startTime: new Date(playerJob.start_time).getTime()
-                };
-              } else if (playerJob.status === 'completed') {
-                return {
-                  ...job,
-                  status: 'completed' as const,
-                  progress: 100
-                };
-              }
+            // If job is in progress
+            if (inProgressJobIds.includes(job.id)) {
+              const playerJob = playerJobs.find(pj => pj.job_id === job.id);
+              return {
+                ...job,
+                status: 'in-progress' as const,
+                progress: playerJob?.progress || 0,
+                startTime: playerJob?.start_time ? new Date(playerJob.start_time).getTime() : Date.now()
+              };
             }
             
-            return job;
+            // If job is completed
+            if (completedJobIds.includes(job.id)) {
+              return {
+                ...job,
+                status: 'completed' as const,
+                progress: 100
+              };
+            }
+            
+            // Otherwise, job is available
+            return {
+              ...job,
+              status: 'available' as const,
+              progress: 0,
+              startTime: undefined
+            };
           });
           
           setAllJobs(jobsWithStatus);
           
-          // Get all in-progress jobs first
-          const inProgressJobs = jobsWithStatus.filter(job => job.status === 'in-progress');
-          
-          // Then get other active jobs
-          const activeJobIds = playerJobs
-            .filter(job => job.status === 'in-progress')
-            .map(job => job.job_id);
-          
-          // Make sure to include all in-progress jobs in the available contracts
-          const selectedContracts = selectRandomContracts(jobsWithStatus, activeJobIds);
+          // Select contracts to display, including in-progress jobs
+          const selectedContracts = selectRandomContracts(jobsWithStatus, inProgressJobIds);
           setAvailableContracts(selectedContracts);
           
           // Set next contract refresh time
@@ -391,18 +423,18 @@ function App() {
         // Time to refresh contracts
         addMessage('Hourly contract refresh: New contracts available!');
         
-        // Reset job statuses first
+        // Reset job statuses first - this will reset completed jobs back to available
         const refreshedJobs = resetJobStatuses();
         setAllJobs(refreshedJobs);
         
-        // Make sure to preserve in-progress jobs
-        const inProgressJobs = refreshedJobs.filter(job => job.status === 'in-progress');
+        // Clear completed jobs tracking to prevent issues with reused jobs
+        completedJobIdsRef.current.clear();
         
-        // Select new random contracts, but always include in-progress jobs
-        const activeJobIds = refreshedJobs
-          .filter(job => job.status === 'in-progress')
-          .map(job => job.id);
+        // Get active job IDs for in-progress jobs
+        const inProgressJobs = refreshedJobs.filter(job => job.status === 'in-progress');
+        const activeJobIds = inProgressJobs.map(job => job.id);
           
+        // Select new random contracts
         const selectedContracts = selectRandomContracts(refreshedJobs, activeJobIds);
         
         if (selectedContracts.length === 0) {
@@ -438,6 +470,89 @@ function App() {
     };
   }, [player, nextContractRefresh, allJobs]);
 
+  // Get active loadout equipment effects for a given player
+  const getActiveLoadoutBonuses = (player: Player) => {
+    // Find active loadout
+    const activeLoadout = player.loadouts.find(loadout => loadout.active);
+    
+    if (!activeLoadout) {
+      return {
+        expMultiplier: 1,
+        creditMultiplier: 1.15, // Base 15% increase
+        torcoinChance: 0.05, // Base 5% chance
+        speedMultiplier: 1
+      };
+    }
+    
+    // Default values
+    let expMultiplier = 1;
+    let creditMultiplier = 1.15; // Base 15% increase
+    let torcoinChance = 0.05; // Base 5% chance
+    let speedMultiplier = 1;
+    
+    // Search for base and motherboard equipment
+    const baseEquipment = player.inventory?.bases?.find(b => b.id === activeLoadout.baseId);
+    const motherboardEquipment = player.inventory?.motherboards?.find(m => m.id === activeLoadout.motherboardId);
+    
+    // Get all components
+    const componentIds = Object.values(activeLoadout.installedComponents);
+    const components = player.inventory?.components?.filter(c => componentIds.includes(c.id)) || [];
+    
+    // Helper function to process special effects
+    const processSpecialEffects = (equipment: Equipment) => {
+      if (!equipment.specialEffects) return;
+      
+      equipment.specialEffects.forEach(effect => {
+        switch (effect.effect) {
+          case 'exp_boost':
+            expMultiplier += 0.1; // +10% exp
+            break;
+          case 'credit_boost':
+            creditMultiplier += 0.2; // +20% credits
+            break;
+          case 'torcoin_chance_boost':
+            torcoinChance += 0.05; // +5% chance
+            break;
+          case 'advanced_torcoin_boost':
+            torcoinChance += 0.1; // +10% chance
+            break;
+          case 'completion_time_boost':
+            speedMultiplier += 0.15; // +15% speed
+            break;
+          case 'advanced_completion_boost':
+            speedMultiplier += 0.25; // +25% speed
+            break;
+          case 'multi_boost':
+            speedMultiplier += 0.15; // +15% speed
+            creditMultiplier += 0.2; // +20% credits
+            torcoinChance += 0.05; // +5% chance
+            break;
+          case 'dual_boost':
+            creditMultiplier += 0.3; // +30% credits
+            expMultiplier += 0.2; // +20% exp
+            break;
+          case 'master_of_all':
+            expMultiplier += 0.1; // +10% exp
+            creditMultiplier += 0.2; // +20% credits
+            // Note: hard_contract_boost effect not included here as it doesn't affect rewards
+            break;
+        }
+      });
+    };
+    
+    // Process each equipment piece
+    if (baseEquipment) processSpecialEffects(baseEquipment);
+    if (motherboardEquipment) processSpecialEffects(motherboardEquipment);
+    components.forEach(component => processSpecialEffects(component));
+    
+    return {
+      expMultiplier,
+      creditMultiplier,
+      torcoinChance,
+      speedMultiplier
+    };
+  };
+
   // Contract progress simulation
   useEffect(() => {
     if (!player) return;
@@ -449,8 +564,14 @@ function App() {
         
         for (const job of updatedJobs) {
           if (job.status === 'in-progress' && job.startTime) {
+            // Get active loadout bonuses
+            const bonuses = getActiveLoadoutBonuses(player);
+            
+            // Apply speed multiplier from equipment to job completion speed
+            const adjustedDuration = job.duration / bonuses.speedMultiplier;
+            
             const elapsed = Date.now() - job.startTime;
-            const newProgress = Math.min(100, Math.floor((elapsed / job.duration) * 100));
+            const newProgress = Math.min(100, Math.floor((elapsed / adjustedDuration) * 100));
             
             if (newProgress !== job.progress) {
               job.progress = newProgress;
@@ -467,72 +588,89 @@ function App() {
               
               if (newProgress >= 100) {
                 job.status = 'completed';
-                addMessage(`Contract completed: ${job.name}`);
-                playSound('complete');
                 
-                // Calculate reward based on whether player has skill requirements
-                let rewardMultiplier = 1.15; // 15% increase to credits
-                let expMultiplier = 0.4; // 60% reduction to experience
-                
-                // Check if this job was accepted with a skill penalty
-                if (job.forcedAccept) {
-                  rewardMultiplier = 0.5 * 1.15; // 50% reduction for forced accept, then 15% increase
-                  expMultiplier = 0.5 * 0.4; // 50% reduction for forced accept, then 60% reduction
-                  addMessage(`Skill requirement not met: rewards reduced by 50%`);
-                }
-                
-                // 5% chance for torcoin on job completion (higher with special equipment)
-                const torcoinChance = Math.random();
-                if (torcoinChance < 0.05) {
-                  addMessage('You found a Torcoin in the contract data!');
-                  playSound('torcoin');
+                // Check if we've already awarded XP for this job
+                if (!completedJobIdsRef.current.has(job.id)) {
+                  // Mark job as completed in our tracking set
+                  completedJobIdsRef.current.add(job.id);
+                  
+                  addMessage(`Contract completed: ${job.name}`);
+                  playSound('complete');
+                  
+                  // Get active loadout bonuses
+                  const bonuses = getActiveLoadoutBonuses(player);
+                  
+                  // Calculate reward based on whether player has skill requirements
+                  let rewardMultiplier = bonuses.creditMultiplier; // Default includes equipment bonus
+                  let expMultiplier = 0.4 * bonuses.expMultiplier; // 60% reduction to experience, then apply equipment bonus
+                  
+                  // Check if this job was accepted with a skill penalty
+                  if (job.forcedAccept) {
+                    rewardMultiplier = 0.5 * bonuses.creditMultiplier; // 50% reduction for forced accept, then apply equipment bonus
+                    expMultiplier = 0.5 * 0.4 * bonuses.expMultiplier; // 50% reduction for forced accept, then 60% reduction, then apply equipment bonus
+                    addMessage(`Skill requirement not met: rewards reduced by 50%`);
+                  }
+                  
+                  // Calculate torcoin chance based on equipment bonuses
+                  const torcoinChance = Math.random();
+                  const adjustedTorcoinChance = bonuses.torcoinChance; // From equipment
+                  
+                  if (torcoinChance < adjustedTorcoinChance) {
+                    addMessage('You found a Torcoin in the contract data!');
+                    playSound('torcoin');
+                    
+                    if (player) {
+                      updatePlayer({
+                        torcoins: player.torcoins + 1
+                      });
+                      
+                      // Add to global chat
+                      addSystemChatMessage(`${player.username} just found a torcoin!`);
+                    }
+                  }
+                  
+                  // 1% chance for wraithcoin on job completion (only if player has wraith equipment)
+                  const wraithcoinChance = Math.random();
+                  const hasWraithEquipment = player.loadouts.some(loadout => 
+                    loadout.active && (
+                      loadout.baseId.includes('wraith') || 
+                      loadout.motherboardId.includes('wraith') ||
+                      Object.values(loadout.installedComponents).some(id => id.includes('wraith'))
+                    )
+                  );
+                  
+                  if (hasWraithEquipment && wraithcoinChance < 0.01) {
+                    addMessage('You found a rare WRAITHCOIN in the contract data!');
+                    playSound('torcoin');
+                    
+                    if (player) {
+                      updatePlayer({
+                        wraithcoins: player.wraithcoins + 1
+                      });
+                      
+                      // Add to global chat
+                      addSystemChatMessage(`${player.username} found a wraithcoin!`);
+                    }
+                  }
                   
                   if (player) {
+                    // Determine base EXP reward based on difficulty
+                    const baseExpReward = job.difficulty === 'easy' ? 100 : job.difficulty === 'medium' ? 250 : 500;
+                    
+                    // Apply experience multiplier (after reducing base amount)
+                    const expReward = Math.floor(baseExpReward * expMultiplier);
+                    
+                    // Apply credit multiplier
+                    const creditReward = Math.floor(job.reward * rewardMultiplier);
+                    
                     updatePlayer({
-                      torcoins: player.torcoins + 1
+                      credits: player.credits + creditReward,
+                      experience: player.experience + expReward
                     });
                     
-                    // Add to global chat
-                    addSystemChatMessage(`${player.username} just found a torcoin!`);
+                    // Add message about rewards
+                    addMessage(`Earned ${creditReward.toLocaleString()} credits and ${expReward} XP`);
                   }
-                }
-                
-                // 1% chance for wraithcoin on job completion (only if player has wraith equipment)
-                const wraithcoinChance = Math.random();
-                const hasWraithEquipment = player.loadouts.some(loadout => 
-                  loadout.active && (
-                    loadout.baseId.includes('wraith') || 
-                    loadout.motherboardId.includes('wraith') ||
-                    Object.values(loadout.installedComponents).some(id => id.includes('wraith'))
-                  )
-                );
-                
-                if (hasWraithEquipment && wraithcoinChance < 0.01) {
-                  addMessage('You found a rare WRAITHCOIN in the contract data!');
-                  playSound('torcoin');
-                  
-                  if (player) {
-                    updatePlayer({
-                      wraithcoins: player.wraithcoins + 1
-                    });
-                    
-                    // Add to global chat
-                    addSystemChatMessage(`${player.username} found a wraithcoin!`);
-                  }
-                }
-                
-                if (player) {
-                  const baseExpReward = job.difficulty === 'easy' ? 100 : job.difficulty === 'medium' ? 250 : 500;
-                  const expReward = Math.floor(baseExpReward * expMultiplier);
-                  const creditReward = Math.floor(job.reward * rewardMultiplier);
-                  
-                  updatePlayer({
-                    credits: player.credits + creditReward,
-                    experience: player.experience + expReward
-                  });
-                  
-                  // Add message about rewards
-                  addMessage(`Earned ${creditReward.toLocaleString()} credits and ${expReward} XP`);
                 }
                 
                 // Update job status in database
@@ -589,38 +727,74 @@ function App() {
     // by checking if the experience hasn't changed from our last known value
     if (player.experience === lastExperienceUpdate) return;
     
+    // To fix experience issues after logout/login, compare with the lastSavedExperienceRef
+    // Only continue if the difference between the current experience and last saved
+    // is reasonable (not a huge jump like 380 to 3560)
+    if (lastSavedExperienceRef.current > 0) {
+      const experienceDifference = Math.abs(player.experience - lastSavedExperienceRef.current);
+      // If difference is more than 1000 and we have not already processed a level up, this might be a duplicated value
+      if (experienceDifference > 1000 && player.experience > 1000 && lastSavedExperienceRef.current > 1000) {
+        console.warn("Detected potentially incorrect experience value after login", {
+          current: player.experience,
+          lastSaved: lastSavedExperienceRef.current,
+          difference: experienceDifference
+        });
+        // Don't process this, but update our tracking to the new value
+        setLastExperienceUpdate(player.experience);
+        lastSavedExperienceRef.current = player.experience;
+        return;
+      }
+    }
+    
     // Prevent rapid-fire level-ups (e.g., from multiple refreshes in a short time)
     const now = Date.now();
     if (now - lastLevelUpTimeRef.current < 2000) return; // At least 2 seconds between level-up operations
     
+    // Get experience required for current level
+    const expRequired = getExpRequiredForLevel(player.level);
+    
     // Check if player has enough XP for a level up
-    if (player.experience >= 1000) {
+    if (player.experience >= expRequired) {
       levelUpInProgressRef.current = true;
       lastLevelUpTimeRef.current = now;
       
-      // Calculate how many levels should be gained
-      const levelsToGain = Math.floor(player.experience / 1000);
-      const remainingXP = player.experience % 1000;
-      const newLevel = player.level + levelsToGain;
-      const newSkillPoints = player.skills.skillPoints + levelsToGain;
+      // Calculate how many levels to gain based on current experience and tier-based requirements
+      let remainingExp = player.experience;
+      let currentLevel = player.level;
+      let levelsGained = 0;
+      
+      while (remainingExp >= getExpRequiredForLevel(currentLevel)) {
+        remainingExp -= getExpRequiredForLevel(currentLevel);
+        currentLevel++;
+        levelsGained++;
+      }
+      
+      const newLevel = player.level + levelsGained;
+      const newSkillPoints = player.skills.skillPoints + levelsGained;
       
       // Show message for level up(s)
-      if (levelsToGain === 1) {
+      if (levelsGained === 1) {
         addMessage(`Level up! You are now level ${newLevel}!`);
       } else {
-        addMessage(`Multiple level up! You gained ${levelsToGain} levels and are now level ${newLevel}!`);
+        addMessage(`Multiple level up! You gained ${levelsGained} levels and are now level ${newLevel}!`);
       }
+      
+      // Show next level requirement
+      const nextLevelRequirement = getExpRequiredForLevel(newLevel);
+      addMessage(`Next level requires ${nextLevelRequirement.toLocaleString()} XP. You have ${remainingExp.toLocaleString()}/${nextLevelRequirement.toLocaleString()} XP.`);
+      
       playSound('complete');
       
       // Important: Update lastExperienceUpdate BEFORE the player update
       // to prevent any race conditions in the state
-      const newExp = remainingXP;
-      setLastExperienceUpdate(newExp);
+      setLastExperienceUpdate(remainingExp);
+      // Also update our saved reference to ensure consistency
+      lastSavedExperienceRef.current = remainingExp;
       
       // Update player data
       updatePlayer({
         level: newLevel,
-        experience: newExp,
+        experience: remainingExp,
         skills: {
           ...player.skills,
           skillPoints: newSkillPoints
@@ -631,6 +805,7 @@ function App() {
         addMessage('ERROR: Failed to process level up. Please refresh the page.');
         // Reset lastExperienceUpdate if the update failed
         setLastExperienceUpdate(player.experience);
+        lastSavedExperienceRef.current = player.experience;
       })
       .finally(() => {
         // Always reset the flag
@@ -641,8 +816,9 @@ function App() {
     } else {
       // If experience changed but not enough for level up, just update tracking
       setLastExperienceUpdate(player.experience);
+      lastSavedExperienceRef.current = player.experience;
     }
-  }, [player?.experience]);
+  }, [player?.experience, player?.level]);
 
   // Job acceptance
   const handleAcceptJob = async (job: Job, forcedAccept = false) => {
@@ -712,6 +888,9 @@ function App() {
             .eq('id', existingJob.id);
           
           if (updateError) throw updateError;
+          
+          // Remove from completed jobs tracking
+          completedJobIdsRef.current.delete(job.id);
           
           addMessage(`Reactivated previously completed job: ${job.name}`);
         } else if (existingJob.status === 'in-progress') {
@@ -806,6 +985,9 @@ function App() {
           activeJobs: [...prev.activeJobs, job.id]
         };
       });
+      
+      // Play acceptance sound
+      playSound('click');
     } catch (error) {
       console.error('Error accepting job:', error);
       addMessage(`ERROR: Failed to accept job: ${(error as Error).message}`);
@@ -821,6 +1003,11 @@ function App() {
         ...player,
         ...updates
       };
+      
+      // If updating experience, update our tracking references
+      if (updates.experience !== undefined) {
+        lastSavedExperienceRef.current = updates.experience;
+      }
       
       // Update local state first for responsive UI
       setPlayer(updatedPlayer);
@@ -1079,38 +1266,39 @@ function App() {
         if (jobsError) throw jobsError;
         
         // Reset completed jobs, but preserve in-progress jobs
-        const completedJobIds = playerJobs
+        const completedJobIdList = playerJobs
           ?.filter(job => job.status === 'completed')
           .map(job => job.id) || [];
           
-        if (completedJobIds.length > 0) {
+        if (completedJobIdList.length > 0) {
           const { error: deleteError } = await supabase
             .from('player_jobs')
             .delete()
-            .in('id', completedJobIds);
+            .in('id', completedJobIdList);
           
           if (deleteError) {
             console.error('Error deleting completed jobs:', deleteError);
             // Continue anyway, it might work on the UI level
           } else {
             addMessage('Admin reset: Completed jobs cleared from database');
+            // Also clear our completed jobs tracking
+            completedJobIdsRef.current.clear();
           }
         }
       }
       
-      // Reset job statuses first
+      // Reset job statuses first - this will reset completed jobs to available
       const refreshedJobs = resetJobStatuses();
       setAllJobs(refreshedJobs);
       
-      // Make sure to include all in-progress jobs in available contracts
-      const inProgressJobs = refreshedJobs.filter(job => job.status === 'in-progress');
+      // Clear completed jobs tracking to prevent issues with reused jobs
+      completedJobIdsRef.current.clear();
       
-      // Select new random contracts
-      const activeJobIds = refreshedJobs
-        .filter(job => job.status === 'in-progress')
-        .map(job => job.id);
+      // Get in-progress job IDs
+      const inProgressJobIds = player.activeJobs;
         
-      const selectedContracts = selectRandomContracts(refreshedJobs, activeJobIds);
+      // Select new random contracts
+      const selectedContracts = selectRandomContracts(refreshedJobs, inProgressJobIds);
       
       if (selectedContracts.length === 0) {
         console.warn('No contracts available for refresh');
@@ -1135,6 +1323,12 @@ function App() {
     }
   };
 
+  // Show refresh warning confirmation dialog
+  const handleShowRefreshConfirmation = () => {
+    if (!player?.manual_refresh_available) return;
+    setShowRefreshWarning(true);
+  };
+
   // Manual contract refresh (once every 12 hours)
   const handleManualRefresh = async () => {
     if (!player || !player.manual_refresh_available) return;
@@ -1142,19 +1336,18 @@ function App() {
     try {
       addMessage('Manually refreshing available contracts...');
       
-      // Reset job statuses first
+      // Reset job statuses first - this will reset completed jobs to available
       const refreshedJobs = resetJobStatuses();
       setAllJobs(refreshedJobs);
       
-      // Make sure to include in-progress jobs
-      const inProgressJobs = refreshedJobs.filter(job => job.status === 'in-progress');
+      // Clear completed jobs tracking to prevent issues with reused jobs
+      completedJobIdsRef.current.clear();
       
-      // Select new random contracts
-      const activeJobIds = refreshedJobs
-        .filter(job => job.status === 'in-progress')
-        .map(job => job.id);
+      // Get in-progress job IDs
+      const inProgressJobIds = player.activeJobs;
         
-      const selectedContracts = selectRandomContracts(refreshedJobs, activeJobIds);
+      // Select new random contracts
+      const selectedContracts = selectRandomContracts(refreshedJobs, inProgressJobIds);
       
       if (selectedContracts.length === 0) {
         console.warn('No contracts available for refresh');
@@ -1183,6 +1376,7 @@ function App() {
       
       addMessage('Manual contract refresh complete. New jobs available.');
       playSound('complete');
+      setShowRefreshWarning(false);
     } catch (error) {
       console.error('Error manually refreshing contracts:', error);
       addMessage(`ERROR: Failed to refresh contracts: ${(error as Error).message}`);
@@ -1270,7 +1464,7 @@ function App() {
                     )}
                     {player.manual_refresh_available && (
                       <button
-                        onClick={handleManualRefresh}
+                        onClick={handleShowRefreshConfirmation}
                         className="flex items-center gap-2 px-3 py-1 border-2 border-green-500 rounded hover:bg-green-900/30 text-green-400 font-mono text-sm"
                       >
                         <RefreshCw className="w-4 h-4" />
@@ -1307,6 +1501,34 @@ function App() {
                   </div>
                 </div>
               </div>
+              
+              {/* Refresh warning confirmation modal */}
+              {showRefreshWarning && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                  <div className="bg-black/90 border-4 border-yellow-500 rounded-lg p-6 max-w-md w-full">
+                    <h3 className="text-yellow-400 font-bold font-mono mb-4">Warning: Manual Refresh</h3>
+                    <p className="text-green-400 font-mono mb-6">
+                      Refreshing contracts will complete the current contract cycle and generate new contracts. 
+                      <br /><br />
+                      <span className="text-yellow-400">You will still be able to finish any active in-progress contracts.</span>
+                    </p>
+                    <div className="flex justify-end gap-4">
+                      <button
+                        onClick={() => setShowRefreshWarning(false)}
+                        className="px-4 py-2 border-2 border-red-500 rounded text-red-400 font-mono hover:bg-red-900/30"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleManualRefresh}
+                        className="px-4 py-2 border-2 border-green-500 rounded text-green-400 font-mono hover:bg-green-900/30"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Admin panel - shown only if isAdmin is true and showAdminPanel is true */}
               {isAdmin && showAdminPanel && (

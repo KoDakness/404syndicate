@@ -156,33 +156,8 @@ export const GlobalChat: React.FC<GlobalChatProps> = ({ messages, onSendMessage 
     if (!message.trim()) return;
     
     try {
-      // Get current username from local player state
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      // Get player info to get username
-      const { data: playerData } = await supabase
-        .from('players')
-        .select('username')
-        .eq('id', user.id)
-        .single();
-        
-      if (!playerData) return;
-      
-      // Insert message into database
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert([
-          {
-            username: playerData.username,
-            content: message,
-            type: 'user'
-          }
-        ]);
-        
-      if (error) throw error;
-      
-      // Clear input
+      await onSendMessage(message);
+      // Clear input regardless of whether the message was sent successfully
       setMessage('');
     } catch (error) {
       console.error('Error sending message:', error);

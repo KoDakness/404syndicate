@@ -7,9 +7,20 @@ interface PlayerStatsProps {
   onLogout: () => void;
 }
 
+// Helper function to get XP requirement for the player's current level
+const getExpRequiredForLevel = (level: number): number => {
+  if (level >= 75) return 40000;
+  if (level >= 60) return 25000;
+  if (level >= 40) return 10000;
+  return 5000; // Base experience requirement
+};
+
 const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onLogout }) => {
   // Find the active loadout if any
   const activeLoadout = player.loadouts.find(loadout => loadout.active);
+  
+  // Get the XP requirement for the player's current level
+  const requiredXP = getExpRequiredForLevel(player.level);
   
   return (
     <div className="bg-black/50 border-2 sm:border-4 border-green-900/50 rounded-lg p-3 sm:p-4 backdrop-blur-sm shadow-xl shadow-green-900/30">
@@ -25,7 +36,7 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({ player, onLogout }) => {
             <div className="flex items-center gap-2">
               <Award className="text-yellow-400" />
               <span className="text-green-400 font-mono">
-                Level {player.level} ({player.experience}/1000 XP)
+                Level {player.level} ({player.experience}/{requiredXP} XP)
               </span>
             </div>
           </div>

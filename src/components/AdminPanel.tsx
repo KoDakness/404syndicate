@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Player } from '../types';
 import { Terminal as TerminalIcon, Coins, Award, Brain, RefreshCw, Timer, AlertCircle, Bitcoin, Skull } from 'lucide-react';
 
@@ -21,6 +21,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onResetTutorial: handleTutorialReset,
   timeMultiplier
 }) => {
+  const [experienceValue, setExperienceValue] = useState<string>(player.experience.toString());
+  const [levelValue, setLevelValue] = useState<string>(player.level.toString());
+
   const addCredits = (amount: number) => {
     onUpdatePlayer({ credits: player.credits + amount });
   };
@@ -35,6 +38,36 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const setLevel = (level: number) => {
     onUpdatePlayer({ level });
+    setLevelValue(level.toString());
+  };
+
+  const setExperience = (experience: number) => {
+    onUpdatePlayer({ experience });
+    setExperienceValue(experience.toString());
+  };
+
+  const handleExperienceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setExperienceValue(value);
+  };
+
+  const handleLevelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setLevelValue(value);
+  };
+
+  const handleExperienceSubmit = () => {
+    const experience = parseInt(experienceValue);
+    if (!isNaN(experience) && experience >= 0) {
+      setExperience(experience);
+    }
+  };
+
+  const handleLevelSubmit = () => {
+    const level = parseInt(levelValue);
+    if (!isNaN(level) && level > 0) {
+      setLevel(level);
+    }
   };
 
   const addSkillPoints = (points: number) => {
@@ -135,10 +168,56 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           </div>
         </div>
 
+        {/* Direct Experience Edit */}
+        <div>
+          <div className="text-red-400 font-mono text-sm mb-2 flex items-center gap-2">
+            <Award className="w-5 h-5" />
+            Experience
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="0"
+              value={experienceValue}
+              onChange={handleExperienceChange}
+              className="flex-1 px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono"
+            />
+            <button
+              onClick={handleExperienceSubmit}
+              className="px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
+            >
+              Set
+            </button>
+          </div>
+        </div>
+
+        {/* Direct Level Edit */}
+        <div>
+          <div className="text-red-400 font-mono text-sm mb-2 flex items-center gap-2">
+            <Award className="w-5 h-5" />
+            Level
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min="1"
+              value={levelValue}
+              onChange={handleLevelChange}
+              className="flex-1 px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono"
+            />
+            <button
+              onClick={handleLevelSubmit}
+              className="px-2 py-1 bg-red-950 border border-red-500 rounded text-xs font-mono hover:bg-red-900"
+            >
+              Set
+            </button>
+          </div>
+        </div>
+
         <div>
           <div className="text-red-400 font-mono text-sm mb-2 flex items-center gap-2">
             <Award className="w-4 h-4" />
-            Level
+            Level Presets
           </div>
           <div className="flex gap-2">
             <button
