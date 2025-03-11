@@ -29,22 +29,30 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
     const cache: Record<string, Equipment> = {};
     
     // Add all available equipment to cache
-    equipment.forEach(item => {
-      cache[item.id] = item;
-    });
+    if (equipment && Array.isArray(equipment)) {
+      equipment.forEach(item => {
+        cache[item.id] = item;
+      });
+    }
     
-    // Add player inventory items to cache
-    player.inventory.bases.forEach(item => {
-      cache[item.id] = item;
-    });
+    // Add player inventory items to cache - adding null checks
+    if (player.inventory?.bases && Array.isArray(player.inventory.bases)) {
+      player.inventory.bases.forEach(item => {
+        cache[item.id] = item;
+      });
+    }
     
-    player.inventory.motherboards.forEach(item => {
-      cache[item.id] = item;
-    });
+    if (player.inventory?.motherboards && Array.isArray(player.inventory.motherboards)) {
+      player.inventory.motherboards.forEach(item => {
+        cache[item.id] = item;
+      });
+    }
     
-    player.inventory.components.forEach(item => {
-      cache[item.id] = item;
-    });
+    if (player.inventory?.components && Array.isArray(player.inventory.components)) {
+      player.inventory.components.forEach(item => {
+        cache[item.id] = item;
+      });
+    }
     
     setEquipmentCache(cache);
   }, [equipment, player.inventory]);
@@ -69,13 +77,13 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
     if (equipmentCache[id]) return equipmentCache[id];
     
     // Then check inventory
-    const base = player.inventory.bases.find(b => b.id === id);
+    const base = player.inventory?.bases?.find(b => b.id === id);
     if (base) return base;
     
-    const motherboard = player.inventory.motherboards.find(m => m.id === id);
+    const motherboard = player.inventory?.motherboards?.find(m => m.id === id);
     if (motherboard) return motherboard;
     
-    const component = player.inventory.components.find(c => c.id === id);
+    const component = player.inventory?.components?.find(c => c.id === id);
     if (component) return component;
     
     // Finally check available equipment
@@ -193,7 +201,7 @@ export const LoadoutManager: React.FC<LoadoutManagerProps> = ({
     );
     
     // Return components that are not already installed in any loadout
-    return player.inventory.components.filter(component => 
+    return (player.inventory?.components || []).filter(component => 
       !installedComponentIds.includes(component.id)
     );
   };

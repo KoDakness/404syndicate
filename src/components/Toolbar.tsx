@@ -62,7 +62,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-black/90 border-t-4 border-green-900/50 z-40">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-center flex-nowrap p-2">
+        <div className="flex justify-start overflow-x-auto scrollbar-hide p-2">
           <button
             onClick={() => togglePanel('equipment')}
             className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1 sm:py-2 rounded border-2 whitespace-nowrap text-sm sm:text-base ${

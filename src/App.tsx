@@ -471,13 +471,13 @@ function App() {
                 playSound('complete');
                 
                 // Calculate reward based on whether player has skill requirements
-                let rewardMultiplier = 1.0;
-                let expMultiplier = 1.0;
+                let rewardMultiplier = 1.15; // 15% increase to credits
+                let expMultiplier = 0.4; // 60% reduction to experience
                 
                 // Check if this job was accepted with a skill penalty
                 if (job.forcedAccept) {
-                  rewardMultiplier = 0.5;
-                  expMultiplier = 0.5;
+                  rewardMultiplier = 0.5 * 1.15; // 50% reduction for forced accept, then 15% increase
+                  expMultiplier = 0.5 * 0.4; // 50% reduction for forced accept, then 60% reduction
                   addMessage(`Skill requirement not met: rewards reduced by 50%`);
                 }
                 
