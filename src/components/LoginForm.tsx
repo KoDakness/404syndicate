@@ -58,7 +58,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, addMessage }) => 
         addMessage('Access granted. Welcome back, hacker.');
 
         // Play the music when login is successful
-        const audio = new Audio('/path/to/your/music.mp3'); // Replace with your audio file path
+        const audio = new Audio('/sounds/background4.mp3'); // Replace with your audio file path
         audio.play();
 
         onLogin();
