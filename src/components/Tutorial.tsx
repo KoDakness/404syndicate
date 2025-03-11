@@ -47,7 +47,7 @@ const tutorialSteps: TutorialStep[] = [
   },
   {
     title: 'Available Contracts',
-    content: 'These are your hacking contracts. Each has different difficulty levels, requirements, and rewards. You can run up to 3 contracts simultaneously.',
+    content: 'These are your hacking contracts. Each has different difficulty levels, requirements, and rewards. You can run up to 8 contracts simultaneously, be wary they only last so long.',
     highlight: '.contracts-panel',
     icon: <Briefcase className="w-5 h-5 text-green-400" />
   },
