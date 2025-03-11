@@ -24,7 +24,7 @@ const getExpRequiredForLevel = (level: number): number => {
   if (level >= 75) return 40000;
   if (level >= 60) return 25000;
   if (level >= 40) return 10000;
-  return 2200; // Base experience requirement
+  return 5000; // Base experience requirement
 };
 
 function App() {
