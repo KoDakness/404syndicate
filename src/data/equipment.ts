@@ -30,7 +30,7 @@ const baseEquipment: Equipment[] = [
     type: 'base',
     rarity: 'rare',
     level: 2,
-    cost: 18500,
+    cost: 185000,
     stats: {
       spoofing: 3,
       firewall: 2,
@@ -51,7 +51,7 @@ const baseEquipment: Equipment[] = [
     type: 'base',
     rarity: 'legendary',
     level: 2,
-    cost: 29500,
+    cost: 295000,
     stats: {
       firewall: 3,
       decryption: 2,
@@ -120,7 +120,7 @@ const motherboards: Equipment[] = [
     type: 'motherboard',
     rarity: 'rare',
     level: 2,
-    cost: 23500,
+    cost: 235000,
     slotCount: 4,
     stats: {
       social: 3,
@@ -193,7 +193,7 @@ const components: Equipment[] = [
     componentType: 'cpu',
     rarity: 'rare',
     level: 2,
-    cost: 35500,
+    cost: 355000,
     stats: {
       decryption: 2,
       spoofing: 2
@@ -214,7 +214,7 @@ const components: Equipment[] = [
     componentType: 'cpu',
     rarity: 'rare',
     level: 2,
-    cost: 24800,
+    cost: 248000,
     stats: {
       decryption: 2,
       firewall: 2
