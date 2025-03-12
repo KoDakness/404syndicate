@@ -17,7 +17,7 @@ import type { Job, Player, Equipment, RandomEvent } from './types';
 const REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour
 const REFRESH_COOLDOWN = 15 * 60 * 1000; // 15 minutes
 const MANUAL_REFRESH_COOLDOWN = 12 * 60 * 60 * 1000; // 12 hours
-const MAX_AVAILABLE_CONTRACTS = 8;
+const MAX_AVAILABLE_CONTRACTS = 10;
 
 function App() {
   const [messages, setMessages] = useState<string[]>([]);
@@ -1420,7 +1420,7 @@ function App() {
                     )}
                     {!player.manual_refresh_available && nextManualRefresh && (
                       <span className="text-sm text-yellow-400">
-                        Manual refresh available in: {Math.ceil((nextManualRefresh.getTime() - Date.now()) / (1000 * 60 * 60))}h
+                        Manual refresh available in: {Math.ceil((nextManualRefresh.getTime() - Date.now()) / (4000 * 60 * 60))}h
                       </span>
                     )}
                   </div>
