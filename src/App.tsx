@@ -757,7 +757,7 @@ function App() {
         experience: newExp,
         skills: {
           ...player.skills,
-          skillPoints: newSkillPoints +2
+          skillPoints: newSkillPoints +3
         }
       })
       .catch((error) => {
